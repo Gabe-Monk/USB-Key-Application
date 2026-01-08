@@ -2,7 +2,7 @@
 
 This repository contains a Dockerized **host-side** application for the ELEC 498 USB Key project.
 It implements the **partner software** that runs on the user's computer and communicates with a USB key
-(microcontroller + fingerprint sensor + external memory).
+(microcontroller + fingerprint sensor ).
 
 > Note: Cryptography here is intentionally **stubbed / demo-only**. Replace `usbkey/crypto.py`
 > with your real RSA-based implementation.
