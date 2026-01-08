@@ -11,7 +11,6 @@ It implements the **partner software** that runs on the user's computer and comm
 
 - CLI application intended to be cross-platform via Docker (Linux container)
 - Detect and connect to a USB key (serial JSON protocol)
-- Retrieve device serial number and status
 - Enroll a fingerprint (command forwarded to device firmware)
 - Authenticate fingerprint before allowing access to a file
 - Validate input file format + enforce **max file size = 1 MB**
@@ -32,23 +31,6 @@ docker compose exec app python -m python -m usbkey enroll
 docker compose exec app python -m usbkey encrypt ./examples/hello.txt --recipient-serial MOCK-0001
 docker compose exec app python -m usbkey decrypt ./examples/hello.txt.ukey
 ```
-
-## Running with real hardware (serial)
-
-If your Pico enumerates as a serial device (e.g., `/dev/ttyACM0`), run:
-
-```bash
-USBKEY_PORT=/dev/ttyACM0 USBKEY_USE_MOCK=0 docker compose up --build
-```
-
-You may need to add:
-
-- `privileged: true`
-- or map the device (already included as an example in `docker-compose.yml`)
-
-> On macOS/Windows, Docker Desktop has limitations accessing USB devices directly.
-> For hardware-in-the-loop, a native run (outside Docker) may be easier, but the container
-> still provides a consistent dev/test environment.
 
 ## CLI
 
