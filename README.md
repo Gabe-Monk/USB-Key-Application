@@ -28,8 +28,6 @@ In another terminal:
 ```bash
 docker compose exec app python -m python -m usbkey status
 docker compose exec app python -m python -m usbkey enroll
-docker compose exec app python -m usbkey encrypt ./examples/hello.txt --recipient-serial MOCK-0001
-docker compose exec app python -m usbkey decrypt ./examples/hello.txt.ukey
 ```
 
 ## CLI
