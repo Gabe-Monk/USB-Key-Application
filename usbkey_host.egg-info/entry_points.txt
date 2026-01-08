@@ -1,0 +1,2 @@
+[console_scripts]
+usbkey = usbkey.cli:app

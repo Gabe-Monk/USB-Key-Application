@@ -1,0 +1,27 @@
+services:
+  mock_device:
+    build:
+      context: .
+      dockerfile: mock_device/Dockerfile
+    ports:
+      - "8765:8765"
+
+  app:
+    build: .
+    environment:
+      # Use mock by default
+      USBKEY_USE_MOCK: "1"
+      USBKEY_DEVICE_URL: "http://mock_device:8765"
+      # For serial mode (set USBKEY_USE_MOCK=0 and USBKEY_PORT=/dev/ttyACM0)
+      USBKEY_PORT: "/dev/ttyACM0"
+      USBKEY_BAUD: "115200"
+      USBKEY_FILE_MAX_BYTES: "1048576"  # 1 MB
+    volumes:
+      - ./examples:/app/examples
+    depends_on:
+      - mock_device
+    command: ["watch", "--interval-s", "2"]
+    # Uncomment for Linux hardware access:
+    # privileged: true
+    # devices:
+    #   - "/dev/ttyACM0:/dev/ttyACM0"
