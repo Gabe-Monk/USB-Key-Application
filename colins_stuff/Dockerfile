@@ -7,4 +7,4 @@ RUN apt-get update && \
                        libzmq3-dev && \
     rm -rf /var/lib/apt/lists/*
 
-CMD ["lsusb"]
+# CMD ["lsusb"]
