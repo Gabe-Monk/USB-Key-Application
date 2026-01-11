@@ -27,13 +27,13 @@ int main () {
     }
     printf("USB key detected on interface '%s'\n", serialPortName.c_str());
     
-    ret = readFromKey(serialPortName);
+    // ret = readFromKey(serialPortName);
     // std::string serialPortName = "/dev/ttyACM0"; // DELETEME
 
     // Open connection with that serial port
     struct sp_port *port;
 
-    int ret = sp_get_port_by_name(serialPortName.c_str(), &port);
+    ret = sp_get_port_by_name(serialPortName.c_str(), &port);
     if (ret != SP_OK) {
         fprintf(stderr, "ERROR (%d) - main: Failed to find port with name '%s'\n", ret, serialPortName.c_str());
         sp_free_port(port);

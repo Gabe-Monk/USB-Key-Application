@@ -14,6 +14,6 @@ docker run -it --rm \
   -w /workspace \
   498_colin \
   bash -c "
-    g++ main.cpp -o main -lserialport -lzmq && \
-    ./main
+    g++ zmqTest.cpp -o zmqTest -lzmq && \
+    ./zmqTest
   "

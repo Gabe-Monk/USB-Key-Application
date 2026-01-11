@@ -26,8 +26,8 @@ docker compose up --build
 In another terminal:
 
 ```bash
-docker compose exec app python -m python -m usbkey status
-docker compose exec app python -m python -m usbkey enroll
+docker compose exec app python -m usbkey status
+docker compose exec app python  -m usbkey enroll
 ```
 
 ## CLI

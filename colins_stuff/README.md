@@ -1,4 +1,4 @@
-# To build (Windows & WSL2)
+# To build main (Windows & WSL2)
 1. Powershell: `winget install usbipd-win`
 2. Close that Powershell terminal and open a new one.
 3. Do `usbipd list` in Powershell with the device disconnected.
@@ -7,3 +7,8 @@
 6. In WSL: `sudo apt install libserialport-dev`
 7. In WSL, build via `g++ main.cpp -o serial_test -lserialport`
 8. When done, do `usbipd unbind --busid <YOUR BUSID>` in Powershell
+
+# To build and run ZMQ test (tested on WSL)
+Do the following from this directory
+1. Build the docker image with the tag `498_colin` via `docker build -t 498_colin .`
+2. Run `./run_zmq.sh`
