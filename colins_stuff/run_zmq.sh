@@ -13,7 +13,4 @@ docker run -it --rm \
   -v "$(pwd):/workspace" \
   -w /workspace \
   498_colin \
-  bash -c "
-    g++ zmqTest.cpp -o zmqTest -lzmq && \
-    ./zmqTest
-  "
+  ./entrypoint.sh

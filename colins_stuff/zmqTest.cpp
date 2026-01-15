@@ -20,7 +20,7 @@ int main() {
         socket.recv(request, zmq::recv_flags::none);
 
         std::string msg(static_cast<char*>(request.data()), request.size());
-        std::cout << "Received: " << msg << std::endl;
+        std::cout << "REP: Received: " << msg << std::endl;
 
         // 5. Send reply
         std::string reply = "Hello from C++";
