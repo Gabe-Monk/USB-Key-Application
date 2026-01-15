@@ -24,9 +24,9 @@ class Settings:
     # New flag to enable ZMQ
     use_zmq: bool = _env_bool("USBKEY_USE_ZMQ", False)
     # Address for ZMQ (defaults to localhost for testing)
-    zmq_address: str = os.getenv("USBKEY_ZMQ_ADDRESS", "tcp://localhost:5555")
+    zmq_address: str = os.getenv("USBKEY_ZMQ_ADDRESS", "tcp://*:5555")
     
-    device_url: str = os.getenv("USBKEY_DEVICE_URL", "http://localhost:8765")
+    device_url: str = os.getenv("USBKEY_DEVICE_URL", "http://*:8765")
     serial_port: str = os.getenv("USBKEY_PORT", "/dev/ttyACM0")
     serial_baud: int = _env_int("USBKEY_BAUD", 115200)
     file_max_bytes: int = _env_int("USBKEY_FILE_MAX_BYTES", 1_048_576)  # 1 MB

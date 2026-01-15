@@ -1,6 +1,8 @@
 #include <zmq.hpp>
 #include <string>
 #include <iostream>
+#include <thread>
+#include <chrono>
 
 // Helper to find the value of a JSON field manually (hacky, but works for testing)
 std::string get_json_value(std::string json, std::string key) {
@@ -28,7 +30,10 @@ int main() {
     zmq::socket_t socket(context, zmq::socket_type::rep);
     socket.bind("tcp://*:5555");
 
-    std::cout << "C++ server listening (JSON Protocol Mode)...\n";
+    std::cout << "C++ server listening (Stateful Mode)...\n";
+
+    // 1. Create a state variable
+    bool is_enrolled = false; 
 
     while (true) {
         zmq::message_t request;
@@ -37,16 +42,41 @@ int main() {
         std::string msg(static_cast<char*>(request.data()), request.size());
         std::cout << "Received: " << msg << std::endl;
 
-        // 1. Extract the Request ID so we can send it back
         std::string req_id = get_json_value(msg, "req_id");
         std::string cmd = get_json_value(msg, "cmd");
 
-        // 2. Construct a valid JSON reply
-        // We just say "ok": true for everything for this test
+        std::string reply_data = "{}";
+
+        // 2. Handle Commands Dynamically
+        if (cmd == "STATUS") {
+            // Return the current state of is_enrolled
+            std::string enrolled_str = is_enrolled ? "true" : "false";
+            reply_data = "{ \"serial\": \"CPP-TEST\", \"firmware\": \"1.0\", \"fingerprint_enrolled\": " + enrolled_str + " }";
+        }
+        else if (cmd == "ENROLL_FINGERPRINT") {
+            std::cout << "Enrolling fingerprint..." << std::endl;
+            // Simulate time taken to enroll
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+            is_enrolled = true; // Update state
+            reply_data = "{}"; 
+        }
+        else if (cmd == "AUTH_FINGERPRINT") {
+             if (is_enrolled) {
+                 reply_data = "{ \"accepted\": true, \"elapsed_ms\": 500 }";
+             } else {
+                 reply_data = "{ \"accepted\": false, \"reason\": \"not enrolled\" }";
+             }
+        }
+        else if (cmd == "GET_SECRET_KEY") {
+             // Fake base64 key
+             reply_data = "{ \"secret_key_b64\": \"MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=\" }";
+        }
+
+        // 3. Send Reply
         std::string reply = "{";
         reply += "\"req_id\": \"" + req_id + "\", ";
         reply += "\"ok\": true, ";
-        reply += "\"data\": { \"serial\": \"CPP-TEST\", \"firmware\": \"1.0\", \"fingerprint_enrolled\": true }";
+        reply += "\"data\": " + reply_data;
         reply += "}";
 
         socket.send(zmq::buffer(reply), zmq::send_flags::none);

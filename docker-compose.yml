@@ -10,7 +10,9 @@ services:
     build: .
     environment:
       # Use mock by default
-      USBKEY_USE_MOCK: "1"
+      USBKEY_USE_MOCK: "0"
+      USBKEY_USE_ZMQ: "1"
+      USBKEY_ZMQ_ADDRESS: "tcp://host.docker.internal:5555"
       USBKEY_DEVICE_URL: "http://mock_device:8765"
       # For serial mode (set USBKEY_USE_MOCK=0 and USBKEY_PORT=/dev/ttyACM0)
       USBKEY_PORT: "/dev/ttyACM0"
