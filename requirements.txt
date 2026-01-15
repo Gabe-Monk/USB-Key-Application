@@ -3,3 +3,4 @@ rich>=13.7.1
 pydantic>=2.7.1
 requests>=2.32.3
 pyserial>=3.5
+pyzmq>=26.0.0
