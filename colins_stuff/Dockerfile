@@ -10,5 +10,3 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install --no-cache-dir pyzmq>=26.0.0
-
-# CMD ["lsusb"]
