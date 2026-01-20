@@ -1,0 +1,97 @@
+import communication
+import files
+import os
+
+# Start the security watchdog immediately
+communication.start_watchdog()
+
+# ---------------------------------------------------------
+# HANDSHAKE
+# ---------------------------------------------------------
+while True:
+    # --- CHANGE IS HERE ---
+    # We print this first so it shows up in the Docker logs!
+    print("Please type 'hello' to start: ")
+    txt = input() 
+    # ----------------------
+    
+    if txt.strip() == "hello": # added strip() just in case of spaces
+        break
+
+print("\nSystem Online.")
+
+# ---------------------------------------------------------
+# MENU LOOP
+# ---------------------------------------------------------
+while True:
+    print("\n--- MENU ---")
+    print("1. Check Status")
+    print("2. Enroll Fingerprint")
+    print("3. Authenticate (Login)")
+    print("4. Encrypt a File")
+    print("5. Decrypt a File")
+    print("6. Exit")
+    
+    choice = input("Select an option: ")
+    
+    if choice == "1":
+        resp = communication.send_command("STATUS")
+        if resp:
+            data = resp.get("data", {})
+            print(f"Device Serial: {data.get('serial')}")
+            print(f"Enrolled: {data.get('fingerprint_enrolled')}")
+        else:
+            print("Device not responding.")
+
+    elif choice == "2":
+        print("Starting enrollment... Put your finger on the sensor.")
+        resp = communication.send_command("ENROLL_FINGERPRINT")
+        if resp and resp.get("ok"):
+            print("Success! Fingerprint saved.")
+        else:
+            print("Enrollment failed.")
+
+    elif choice == "3":
+        print("Please scan your finger now...")
+        resp = communication.send_command("AUTH_FINGERPRINT", {"timeout_s": 10})
+        if resp and resp["data"].get("accepted"):
+            print("FINGERPRINT ACCEPTED!")
+        else:
+            print("REJECTED.")
+
+    elif choice == "4":
+        fname = input("Enter filename to encrypt: ")
+        # Call the empty placeholder function
+        files.simple_encrypt_file(fname)
+
+    elif choice == "5":
+        fname = input("Enter .ukey filename to decrypt: ")
+        
+        print("You must authenticate first...")
+        resp = communication.send_command("AUTH_FINGERPRINT")
+        
+        if resp and resp["data"]["accepted"]:
+            print("Auth OK.")
+            
+            # Call the empty placeholder function
+            secret_file = files.simple_decrypt_file(fname)
+            
+            # Only proceed if a file was actually created
+            if secret_file:
+                input("File is ready. Press ENTER to delete it.")
+                
+                # Cleanup
+                if os.path.exists(secret_file):
+                    os.remove(secret_file)
+                    print("File deleted.")
+                    communication.current_decrypted_file = None
+        else:
+            print("Authentication failed!")
+
+    elif choice == "6":
+        print("Exiting...")
+        communication.running = False # Stop the watchdog
+        break
+
+    else:
+        print("Invalid choice.")
