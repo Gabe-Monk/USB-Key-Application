@@ -16,6 +16,7 @@ COPY . .
 # Install Python libraries
 RUN pip install --no-cache-dir -r build/requirements.txt
 
+# Build hardware communication submodule
 RUN g++ hardware_communication/hw_comms.cpp -o hardware_communication/hw_comms -lzmq -ljsoncpp
 
 # run the app

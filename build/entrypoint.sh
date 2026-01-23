@@ -1,5 +1,4 @@
 #!/bin/bash
-# g++ zmqTest.cpp -o zmqTest -lzmq
 
 hardware_communication/hw_comms &
 pid=$!
