@@ -1,5 +1,7 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: build/Dockerfile
     stdin_open: true
     tty: true

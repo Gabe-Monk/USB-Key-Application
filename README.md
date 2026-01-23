@@ -3,8 +3,9 @@
 
 ## How to Run It
 
-1. Build the Docker image via `docker compose build`
-2. Run the application via `docker compose run --rm app`
+1. Install Docker engine. If you're using Ubuntu on WSL2, you can do so by following [these instructions](https://docs.docker.com/engine/install/ubuntu/)
+2. Build the Docker image via `docker compose build`
+3. Run the application via `docker compose run --rm app`
 
 If you want to have a simulated device to communicate with, run the following in another terminal before running this application
 
