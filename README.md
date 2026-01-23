@@ -10,7 +10,7 @@
 If you want to have a simulated device to communicate with, run the following in another terminal before running this application
 
 ```bash
-cd colins_stuff
+cd temporary/colins_stuff
 docker build -t 498_colin .
 docker run -it --rm \
   -p 5555:5555 \
