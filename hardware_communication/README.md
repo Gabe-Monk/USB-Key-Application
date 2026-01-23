@@ -1,0 +1,2 @@
+# hardware_communication/
+This directory stores the C/C++ submodule which handles any interaction with the USB key hardware. The main python code that drives the program communicates with this submodule whenever it needs something from the hardware, and the submodule in turn gets it from the hardware before sending it back to the main program.

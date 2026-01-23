@@ -35,7 +35,7 @@ while True:
     choice = input("Select an option: ")
     
     if choice == "1":
-        resp = communication.send_command("STATUS")
+        resp = communication.send_command("GET_STATUS")
         if resp:
             data = resp.get("data", {})
             print(f"Device Serial: {data.get('serial')}")

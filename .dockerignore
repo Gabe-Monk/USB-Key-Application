@@ -2,5 +2,5 @@
 temporary/
 
 .gitignore
-README.md
+*/README.md
 LICENSE
