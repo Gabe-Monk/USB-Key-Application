@@ -45,7 +45,7 @@ class CmdMsg {
         CmdMsg() = default;
 
         CmdMsg(const Json::Value& root) : CmdMsg() {
-            serialize(root);
+            deserialize(root);
         }
 
         CmdMsg(const zmq::message_t& req) : CmdMsg() {
@@ -61,10 +61,10 @@ class CmdMsg {
                 return;
             }
             
-            serialize(reqJson);
+            deserialize(reqJson);
         }
 
-        void serialize(const Json::Value& root) {
+        void deserialize(const Json::Value& root) {
             if (root.isMember("req_id")) {
                 reqId = root["req_id"].asUInt();
             }
