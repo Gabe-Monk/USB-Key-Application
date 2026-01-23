@@ -1,6 +1,5 @@
 .git/
-aahashs_stuff/
-colins_stuff/
+temporary/
 
 .gitignore
 README.md
