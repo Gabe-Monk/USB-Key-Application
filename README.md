@@ -1,25 +1,30 @@
 # USB Key Project (ELEC 498)
 
-
 ## How to Run It
 
-1. Install Docker engine. If you're using Ubuntu on WSL2, you can do so by following [these instructions](https://docs.docker.com/engine/install/ubuntu/)
-2. Build the Docker image via `docker compose build`
-3. Run the application via `docker compose run --rm app`
-<!-- 
-If you want to have a simulated device to communicate with, run the following in another terminal before running this application
+### Wire Hardware Appropriately
+To run the project in its current form, the microcontroller must be wired to the EEPROM chip. Follow the schematic below to do so.
 
-```bash
-cd temporary/colins_stuff
-docker build -t 498_colin .
-docker run -it --rm \
-  -p 5555:5555 \
-  --privileged \
-  -v "$(pwd):/workspace" \
-  -w /workspace \
-  498_colin \
-  bash -c "g++ gabes_zmqTest.cpp -o gabes_zmqTest -lzmq && ./gabes_zmqTest"
-``` -->
+![wiring diagram](imgs/EEPROM-only-schematic.png)
+
+### Push Firmware to USB Key
+1. Install necessary firmwares and libraries by following the instructions in `firmware/README.md`
+1. Upload all of the `.py` files in the `firmware` directory to the USB key's root file directory
+1. Disconnect the USB key
+
+### Configure Port Forwarding (Windows & WSL2)
+1. Powershell: `winget install usbipd-win`
+1. Close that Powershell terminal and open a new one (as admin)
+1. Do `usbipd list` in Powershell with the device disconnected
+1. Plug the device into the USB port you plan to use it with and do `usbipd list` again, seeing which entry is there now that wasn't before. Take note of its BUSID (e.g., "1-2")
+1. In Powershell, do `usbipd bind --force --busid <YOUR BUSID>`, then do `usbipd attach --wsl --busid <YOUR BUSID> --auto-attach` and leave that Powershell terminal running
+1. Unplug the USB key again
+1. When done running the program (from another terminal following later steps), kill the Powershell process and then do `usbipd unbind --busid <YOUR BUSID>` (in Powershell)
+
+### Compile and Run Client-Side Program
+1. Install Docker engine. If you're using Ubuntu on WSL2, you can do so by following [these instructions](https://docs.docker.com/engine/install/ubuntu/)
+1. Build the Docker image via `docker compose build`
+1. Run the application via `docker compose run --rm app`
 
 ## What Each File Does
 Here is a quick explanation of the files so you know where everything is:

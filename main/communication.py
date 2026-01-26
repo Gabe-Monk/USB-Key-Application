@@ -7,13 +7,13 @@ import os
 # ---------------------------------------------------------
 # SETUP ZMQ
 # ---------------------------------------------------------
-print("Setting up connection...")
+# print("Setting up connection...")
 context = zmq.Context()
 socket = context.socket(zmq.REQ)
 # Increase timeout to 5 seconds to match the C++ simulator
 socket.setsockopt(zmq.RCVTIMEO, 5000) 
 
-print("Connecting to hardware interface on port 5555...")
+# print("Connecting to hardware interface on port 5555...")
 socket.connect("tcp://localhost:5555")
 
 current_decrypted_file = None
@@ -64,6 +64,50 @@ def send_command(cmd, data=None):
         socket.connect("tcp://localhost:5555")
         
         return None
+
+def wait_until_up():
+    """
+    Pings hw_comms submodule until it gets a response. To be used during init
+    """
+
+    # We need to use 'global' so we can replace the broken socket
+    global socket, context 
+
+    # print("Waiting for hw_comms submodule to be up...")
+
+    msg = {
+        "req_id": 123, 
+        "cmd": "WD_HEARTBEAT", 
+        "data": None
+    }
+
+    json_str = json.dumps(msg)
+
+    response = False
+    
+    while not response:
+        try:
+            # 1. Try to send
+            socket.send_string(json_str)
+            
+            # 2. Try to receive
+            socket.recv_string()
+
+            response = True
+        except Exception as e:
+            # Close the broken socket
+            socket.close(linger=0)
+            
+            # Create a brand new one
+            socket = context.socket(zmq.REQ)
+            socket.setsockopt(zmq.RCVTIMEO, 5000) # Remember the 5s timeout!
+            socket.connect("tcp://localhost:5555")
+
+            time.sleep(0.1)
+            response = False
+    
+    # print("Done waiting for hw_comms submodule...")
+
 
 def start_watchdog():
     t = threading.Thread(target=_watchdog_loop)

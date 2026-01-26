@@ -3,5 +3,9 @@ services:
     build:
       context: .
       dockerfile: build/Dockerfile
+    privileged: true
     stdin_open: true
     tty: true
+    entrypoint: /app/build/entrypoint.sh
+    volumes:
+      - /dev:/dev

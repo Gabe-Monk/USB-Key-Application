@@ -2,6 +2,9 @@ import communication
 import files
 import os
 
+# Wait until communication link with main program is established
+communication.wait_until_up()
+
 # Start the security watchdog immediately
 communication.start_watchdog()
 
@@ -39,6 +42,7 @@ while True:
         if resp:
             data = resp.get("data", {})
             print(f"Device Serial: {data.get('serial')}")
+            print(f"Device Firmware: {data.get('firmware')}")
             print(f"Enrolled: {data.get('fingerprint_enrolled')}")
         else:
             print("Device not responding.")
