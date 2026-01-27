@@ -1,5 +1,7 @@
 .git/
 temporary/
+imgs/
+firmware/
 
 .gitignore
 */README.md
