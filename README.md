@@ -2,10 +2,10 @@
 
 ## How to Run It
 
-### Wire Hardware Appropriately
-To run the project in its current form, the microcontroller must be wired to the EEPROM chip. Follow the schematic below to do so.
+### Wiring
+A wiring diagram for this project is available in `Schematic.pdf`.
 
-![wiring diagram](imgs/EEPROM-only-schematic.png)
+![wiring diagram](imgs/Schematic.png)
 
 ### Push Firmware to USB Key
 1. Install necessary firmwares and libraries by following the instructions in `firmware/README.md`
