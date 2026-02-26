@@ -10,7 +10,7 @@ FIRMWARE = "1.0.0"
 led = digitalio.DigitalInOut(board.LED)
 led.direction = digitalio.Direction.OUTPUT
 
-eeprom = EepromDevice(scl_pin=board.GP1, sda_pin=board.GP0)
+eeprom = EepromDevice(scl_pin=board.GP5, sda_pin=board.GP4)
 
 # # Example: Write and read a byte
 # print("Writing 0xDEADBEEF to address 0x10...")
