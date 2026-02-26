@@ -9,7 +9,8 @@ typedef enum {
     UNKNOWN_DEVICE_CMD = 0,
     HANDSHAKE_HELLO,
     GET_SERIAL_NUMBER,
-    GET_FIRMWARE_VERSION
+    GET_FIRMWARE_VERSION,
+    GET_PRIVATE_KEY
 } deviceCmd;
 
 /**
@@ -19,7 +20,8 @@ typedef enum {
 const std::map<deviceCmd, std::string> deviceCmdMap = {
     {HANDSHAKE_HELLO, "pc_hello\n"},
     {GET_SERIAL_NUMBER, "pc_req_sn\n"},
-    {GET_FIRMWARE_VERSION, "pc_req_fw\n"}
+    {GET_FIRMWARE_VERSION, "pc_req_fw\n"},
+    {GET_PRIVATE_KEY, "pc_req_key\n"}
 };
 
 /**
@@ -43,5 +45,6 @@ deviceErr readFromKey(std::string &msg, struct sp_port *port);
 deviceErr performHandshake(struct sp_port *port);
 deviceErr getSerialNumber(std::string &sn, struct sp_port *port);
 deviceErr getFirmware(std::string &fw, struct sp_port *port);
+deviceErr getPrivateKey(std::string &key, struct sp_port *port);
 
 #endif

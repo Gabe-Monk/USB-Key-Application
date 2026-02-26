@@ -9,3 +9,6 @@ services:
     entrypoint: /app/build/entrypoint.sh
     volumes:
       - /dev:/dev
+      - .:/app
+      - /app/hardware_communication  # Preserves hw_comms binary
+      - /app/build

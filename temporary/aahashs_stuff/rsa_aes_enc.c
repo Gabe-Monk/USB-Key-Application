@@ -58,7 +58,7 @@ unsigned char *rsa_encrypt(EVP_PKEY *rsa_pub_key, unsigned char *aes_key, size_t
 int main(int argc, char** argv){
 
     // Generate symmetric key for AES algorithm
-    unsigned char aes_key[32];
+    unsigned char aes_key[16];
     if(!(RAND_bytes(aes_key, sizeof(aes_key)))){
         printf("Error: Could not generate random aes_key\n");
         return 1;

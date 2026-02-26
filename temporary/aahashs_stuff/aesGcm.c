@@ -33,7 +33,7 @@ int aesGcm(FILE *in, FILE *out, int do_encrypt, unsigned char *key, unsigned cha
         handleErrors();
         return 0;
     }
-    if(!(cipher = EVP_CIPHER_fetch(NULL, "AES-256-GCM", NULL))){
+    if(!(cipher = EVP_CIPHER_fetch(NULL, "AES-128-GCM", NULL))){
         printf("Error (EVP_CIPHER_fetch): Could not return a pointer to then EVP_CIPHER\n");
         EVP_CIPHER_CTX_free(ctx);
         handleErrors();

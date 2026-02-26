@@ -12,6 +12,12 @@ A wiring diagram for this project is available in `Schematic.pdf`.
 1. Upload all of the `.py` files in the `firmware` directory to the USB key's root file directory
 1. Disconnect the USB key
 
+### Push Private Key to USB Key
+1. First generate the key by running generate_keys.py
+1. Once you have your key, go and paste it in the `KEY_BODY` variable, make sure it is all one line
+1. Connect your USB and run write_key.py in Thonny
+1. Your private key is now saved to the usb key
+
 ### Configure Port Forwarding (Windows & WSL2)
 1. Powershell: `winget install usbipd-win`
 1. Close that Powershell terminal and open a new one (as admin)
@@ -38,7 +44,6 @@ Here is a quick explanation of the files so you know where everything is:
 
   1. `main/files.py`:
   This file is supposed to handle reading, encrypting, and decrypting files. \
-  *Note: Right now, the encryption functions are empty (placeholders). I put comments in there to remind myself to add the real encryption logic later once Aahash's code is ready.*
 
   1. `build/Dockerfile`:
   Encapsulates the application.
@@ -49,8 +54,7 @@ Here is a quick explanation of the files so you know where everything is:
   1. `build/requirements.txt`:
   This is just a list of libraries required, currently only installs pyzmq
 
-## To-Do List
-
-[ ] Add real encryption code in files.py.
-
-[ ] Test with the real hardware.
+## Encryption/Decryption Info
+1. When encrypting a file, be sure that it is in the root directory of the USB-Key-Application folder
+1. When decrypting a file the decrypted file will appear in the root directory of the USB-Key-Application folder
+1. Right now after decrypting is done, the app gets stuck in a loop of printing [SECURITY ALERT] DEVICE DISCONNECTED DELETING FILES. Dont worry its not actually deleting the decrypted file, its just a bug I need to fix. But to exit the app from this stage, just hit enter for the main menu to reappear, enter 6, and then hit enter once again

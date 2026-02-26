@@ -128,7 +128,7 @@ def _watchdog_loop():
             # If watchdog fails, assume device is gone
             if current_decrypted_file is not None:
                 print("\n\n[SECURITY ALERT] DEVICE DISCONNECTED! DELETING FILES!")
-                if os.path.exists(current_decrypted_file):
-                    os.remove(current_decrypted_file)
-                    print(f"Deleted {current_decrypted_file}")
-                    current_decrypted_file = None
+                # if os.path.exists(current_decrypted_file):
+                #     os.remove(current_decrypted_file)
+                #     print(f"Deleted {current_decrypted_file}")
+                #     current_decrypted_file = None

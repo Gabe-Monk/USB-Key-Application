@@ -49,7 +49,7 @@ int main() {
         
         Json::Value data;
 
-        switch (msg.getCmd()) {
+switch (msg.getCmd()) {
             case GET_STATUS: {
                 std::string reply;
                 CHK(getSerialNumber(reply, port));
@@ -63,8 +63,26 @@ int main() {
                 break; 
             case AUTH_FINGERPRINT: // TODO:
                 break;
-            case GET_SECRET_KEY: // TODO:
+            case GET_SECRET_KEY: {
+                std::string reply;
+                
+                // Fetch the private key from the device by sending the pc_req_key command.
+                // The result is stored in the 'reply' string.
+                deviceErr err = getPrivateKey(reply, port);
+                
+                // If the hardware successfully retrieves and transmits the base64 key string:
+                if (err == OK) {
+                    // Inject the base64 key directly into the JSON data payload 
+                    // so the Python script (files.py) can parse it out of the dictionary.
+                    data["secret_key"] = reply;
+                    response["ok"] = true;
+                } else {
+                    // Gracefully handle hardware read errors so the main Python process doesn't crash.
+                    data["error"] = "Failed to retrieve key";
+                    response["ok"] = false;
+                }
                 break;
+            }
             case WD_HEARTBEAT:
                 data["device_connected"] = true; // TODO:
                 break;
@@ -154,7 +172,7 @@ deviceErr getNewSerialPort(std::string &portName) {
         // Check sizes to see if we've found a new device
         int newPorts;
         for (newPorts = 0; ports[newPorts]; newPorts++) {}
-        if (newPorts == portNamesOg.size()+1) {
+        if (newPorts > portNamesOg.size()) { // Changed == to >
             break;
         } else {
             sp_free_port_list(ports);
@@ -169,9 +187,9 @@ deviceErr getNewSerialPort(std::string &portName) {
     sp_free_port_list(ports);
 
     // Make sure list sizes are as expected before bothering to continue
-    if (portNamesNew.size() != portNamesOg.size()+1) {
+    if (portNamesNew.size() <= portNamesOg.size()) { // Changed to <=
         ret = ERROR_GENERIC;
-        LOG_ERR(ret, "Expected to find 1 additional interface after device was plugged in, actually found %d (%lu before, %lu after)", (int)portNamesNew.size()-(int)portNamesOg.size(), portNamesOg.size(), portNamesNew.size());
+        LOG_ERR(ret, "Expected to find new interfaces, but found none.");
         return ret;
     }
 
@@ -197,33 +215,43 @@ deviceErr getNewSerialPort(std::string &portName) {
  * @returns `OK` if successful
  */
 deviceErr initDeviceComms (struct sp_port **port) {
-    // Start by getting name of serial port we have the key plugged into
-    std::string serialPortName;
+    // --- CHANGE: HARDCODED PORT FOR VM STABILITY ---
+    // Instead of forcing the user to unplug and re-plug the device to detect a new serial interface,
+    // we directly target the Linux serial ports standard to the Pico's CDC data console.
+    // This is significantly more stable in Docker/WSL/VM environments where USB passthrough can be finicky.
+    std::string serialPortName = "/dev/ttyACM0"; 
     
-    deviceErr ret = getNewSerialPort(serialPortName);
-    if (ret != OK) {
-        LOG_ERR(ret, "Could not find target serial port. Make sure device is disconnected when program starts");
-        return ret;
-    }
-    LOG_DBG("USB key detected on interface '%s'", serialPortName.c_str());
+    LOG_DBG("Attempting to connect directly to '%s'...", serialPortName.c_str());
 
+    // Attempt to open the primary port (/dev/ttyACM0)
     int spRet = sp_get_port_by_name(serialPortName.c_str(), port);
     if (spRet != SP_OK) {
-        ret = ERROR_SERIAL_PORT;
-        LOG_ERR(ret, "Failed to find port with name '%s'", serialPortName.c_str());
-        sp_free_port(*port);
-        return ret;
+        // Fallback: If ACM0 is busy or the OS assigned the Pico to ACM1 (which happens frequently 
+        // if the device resets or drops connection briefly), we gracefully fall back to ttyACM1.
+        LOG_DBG("Failed to find '%s', trying '/dev/ttyACM1'...", serialPortName.c_str());
+        serialPortName = "/dev/ttyACM1";
+        spRet = sp_get_port_by_name(serialPortName.c_str(), port);
+        
+        if (spRet != SP_OK) {
+             // If both standard ports fail, the device is completely inaccessible to the container.
+             deviceErr ret = ERROR_SERIAL_PORT;
+             LOG_ERR(ret, "Failed to find /dev/ttyACM0 or /dev/ttyACM1. Is the device plugged in and passed to the VM?");
+             return ret;
+        }
     }
 
+    LOG_DBG("USB key found on interface '%s'", serialPortName.c_str());
+
+    // Actually open the connection now that we have successfully located the port structure
     spRet = sp_open(*port, SP_MODE_READ_WRITE);
     if (spRet != SP_OK) {
-        ret = ERROR_SERIAL_PORT;
+        deviceErr ret = ERROR_SERIAL_PORT;
         LOG_ERR(ret, "Failed to open serial port '%s'", serialPortName.c_str());
         sp_free_port(*port);
         return ret;
     }
 
-    return ret;
+    return OK;
 }
 
 /*********************************************************************************************************************
@@ -272,9 +300,11 @@ deviceErr readFromKey(std::string &msg, struct sp_port *port) {
     bool receivedNewline = false;
     deviceErr ret = OK;
 
-    while (bytes_read < sizeof(buf)) {
+    // Use a slightly longer timeout loop for the key retrieval if needed
+    // But since sp_blocking_read waits, we rely on its internal timeout.
+    while (bytes_read < sizeof(buf) - 1) {
         char c;
-        int spRet = sp_blocking_read(port, &c, 1, 100);  // read 1 byte at a time
+        int spRet = sp_blocking_read(port, &c, 1, 3000);  // read 1 byte at a time
         if (spRet <= 0) {
             // timeout or error
             break;
@@ -314,11 +344,15 @@ deviceErr readFromKey(std::string &msg, struct sp_port *port) {
  */
 deviceErr performHandshake(struct sp_port *port) {
     deviceErr ret = OK;
+    // Flush any old data from the buffer
+    sp_flush(port, SP_BUF_BOTH);
 
     CHK(sendToKey(HANDSHAKE_HELLO, port));
     std::string reply;
     CHK(readFromKey(reply, port));
-    if (reply != "usb_key_hello") {
+    
+    // CHANGED: Use .find() instead of != to ignore trailing newlines/whitespace
+    if (reply.find("usb_key_hello") == std::string::npos) {
         ret = ERROR_FAILED_HANDSHAKE;
         LOG_ERR(ret, "Didn't receive hello message back from serial port. Received '%s'", reply.c_str());
         sp_close(port);
@@ -353,5 +387,13 @@ deviceErr getSerialNumber(std::string &sn, struct sp_port *port) {
 deviceErr getFirmware(std::string &fw, struct sp_port *port) {
     CHK(sendToKey(GET_FIRMWARE_VERSION, port));
     CHK(readFromKey(fw, port));
+    return OK;
+}
+
+/*********************************************************************************************************************/
+deviceErr getPrivateKey(std::string &key, struct sp_port *port) {
+    CHK(sendToKey(GET_PRIVATE_KEY, port));
+    // Increase read timeout logic implicitly by allowing readFromKey to handle it
+    CHK(readFromKey(key, port));
     return OK;
 }

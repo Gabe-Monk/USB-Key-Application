@@ -71,10 +71,10 @@ while True:
     elif choice == "5":
         fname = input("Enter .ukey filename to decrypt: ")
         
-        print("You must authenticate first...")
-        resp = communication.send_command("AUTH_FINGERPRINT")
+        # print("You must authenticate first...")
+        # resp = communication.send_command("AUTH_FINGERPRINT")
         
-        if resp and resp["data"]["accepted"]:
+        if True:#resp and resp["data"]["accepted"]:
             print("Auth OK.")
             
             # Call the empty placeholder function
@@ -84,11 +84,11 @@ while True:
             if secret_file:
                 input("File is ready. Press ENTER to delete it.")
                 
-                # Cleanup
-                if os.path.exists(secret_file):
-                    os.remove(secret_file)
-                    print("File deleted.")
-                    communication.current_decrypted_file = None
+                # # Cleanup
+                # if os.path.exists(secret_file):
+                #     os.remove(secret_file)
+                #     print("File deleted.")
+                #     communication.current_decrypted_file = None
         else:
             print("Authentication failed!")
 

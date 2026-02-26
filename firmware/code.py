@@ -1,6 +1,7 @@
 import board
 import sys
 import digitalio
+import binascii
 from eeprom import EepromDevice
 
 SERIAL_NUM = 0x0001
@@ -39,6 +40,27 @@ while True:
         print(SERIAL_NUM)
     elif line == 'pc_req_fw':
         print(FIRMWARE)
+    elif line == 'pc_req_key':
+        # Read length (first 2 bytes)
+        try:
+            len_hi = eeprom.read_byte(0)
+            len_lo = eeprom.read_byte(1)
+            length = (len_hi << 8) | len_lo
+            
+            if 0 < length <= 510:
+                # Read key bytes
+                raw_bytes = bytearray(length)
+                for i in range(length):
+                    raw_bytes[i] = eeprom.read_byte(i + 2)
+                
+                # Convert to base64 and print
+                b64_str = binascii.b2a_base64(raw_bytes).strip().decode('utf-8')
+                print(b64_str)
+            else:
+                print("error_invalid_length")
+        except:
+            print("error_eeprom_read")
+
     else:
         print("unrecognized value received ('" + line + "')")
 
