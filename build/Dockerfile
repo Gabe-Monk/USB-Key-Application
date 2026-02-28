@@ -16,14 +16,14 @@ WORKDIR /app
 COPY . .
 
 # Install Python libraries
-RUN pip install --no-cache-dir -r build/requirements.txt
+RUN pip install --no-cache-dir -r /app/build/requirements.txt
+
+RUN mkdir -p /app/build/bin
 
 # Build hardware communication submodule
-RUN g++ hardware_communication/hw_comms.cpp -o hardware_communication/hw_comms -lzmq -ljsoncpp -lserialport
+RUN g++ hardware_communication/hw_comms.cpp -o build/bin/hw_comms -lzmq -ljsoncpp -lserialport
 
 # Build Aahash's Encryption/Decryption binaries
 # We compile them into the build/ directory for easy access
-RUN gcc temporary/aahashs_stuff/rsa_aes_enc.c temporary/aahashs_stuff/aesGcm.c -o build/rsa_aes_enc -lssl -lcrypto
-RUN gcc temporary/aahashs_stuff/rsa_aes_dec.c temporary/aahashs_stuff/aesGcm.c -o build/rsa_aes_dec -lssl -lcrypto
-
-RUN chmod +x build/entrypoint.sh
+RUN gcc temporary/aahashs_stuff/rsa_aes_enc.c temporary/aahashs_stuff/aesGcm.c -o build/bin/rsa_aes_enc -lssl -lcrypto
+RUN gcc temporary/aahashs_stuff/rsa_aes_dec.c temporary/aahashs_stuff/aesGcm.c -o build/bin/rsa_aes_dec -lssl -lcrypto

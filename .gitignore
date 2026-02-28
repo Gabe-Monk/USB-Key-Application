@@ -4,6 +4,8 @@ __pycache__/
 .env
 dist/
 *.ukey
+*.pem
 colins_stuff/zmqTest
 colins_stuff/main
 .DS_Store
+*/bin

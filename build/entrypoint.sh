@@ -1,8 +1,8 @@
 #!/bin/bash
 
-hardware_communication/hw_comms &
+/app/build/bin/hw_comms &
 pid=$!
 
-python -u main/main.py
+python -u /app/main/main.py
 
 kill $pid

@@ -5,3 +5,4 @@ firmware/
 .gitignore
 */README.md
 LICENSE
+*.pdf

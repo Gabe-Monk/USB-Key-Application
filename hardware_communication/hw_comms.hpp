@@ -5,6 +5,8 @@
 #include "errors.hpp"
 #include <map>
 
+#define DEBUG_SIMPLE_DISCOVERY_MODE // Uncomment this to use simplified discovery for VM work
+
 typedef enum {
     UNKNOWN_DEVICE_CMD = 0,
     HANDSHAKE_HELLO,

@@ -10,5 +10,4 @@ services:
     volumes:
       - /dev:/dev
       - .:/app
-      - /app/hardware_communication  # Preserves hw_comms binary
-      - /app/build
+      - /app/build # Preserves binaries

@@ -6,8 +6,8 @@ import communication
 from Crypto.PublicKey import RSA
 
 # Configuration constants for the hardcoded paths expected by the C encryption/decryption binaries
-ENC_BIN = "./build/rsa_aes_enc"
-DEC_BIN = "./build/rsa_aes_dec"
+ENC_BIN = "/app/build/bin/rsa_aes_enc"
+DEC_BIN = "/app/build/bin/rsa_aes_dec"
 C_INPUT_FILE = "input.pdf"
 C_OUTPUT_FILE = "output.bin"
 C_PUB_KEY = "usb_pub.pem"
@@ -34,7 +34,8 @@ def simple_encrypt_file(target_file):
             shutil.copy(target_abs, C_INPUT_FILE)
             
         # Copy the local public key into the workspace so the binary can find it
-        shutil.copy("public_key.pem", C_PUB_KEY)
+        # TODO: This will need to be changed to some table, fetched by serial number
+        shutil.copy("/app/setup/public_key.pem", C_PUB_KEY)
 
         # 2. Execute the C encryption binary
         subprocess.run([ENC_BIN], check=True)

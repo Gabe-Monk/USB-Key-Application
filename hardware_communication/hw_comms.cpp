@@ -172,7 +172,7 @@ deviceErr getNewSerialPort(std::string &portName) {
         // Check sizes to see if we've found a new device
         int newPorts;
         for (newPorts = 0; ports[newPorts]; newPorts++) {}
-        if (newPorts > portNamesOg.size()) { // Changed == to >
+        if (newPorts == portNamesOg.size()+1) { 
             break;
         } else {
             sp_free_port_list(ports);
@@ -187,9 +187,9 @@ deviceErr getNewSerialPort(std::string &portName) {
     sp_free_port_list(ports);
 
     // Make sure list sizes are as expected before bothering to continue
-    if (portNamesNew.size() <= portNamesOg.size()) { // Changed to <=
+    if (portNamesNew.size() != portNamesOg.size()+1) {
         ret = ERROR_GENERIC;
-        LOG_ERR(ret, "Expected to find new interfaces, but found none.");
+         LOG_ERR(ret, "Expected to find 1 additional interface after device was plugged in, actually found %d (%lu before, %lu after)", (int)portNamesNew.size()-(int)portNamesOg.size(), portNamesOg.size(), portNamesNew.size());
         return ret;
     }
 
@@ -206,6 +206,45 @@ deviceErr getNewSerialPort(std::string &portName) {
     return ret;
 }
 
+#ifndef DEBUG_SIMPLE_DISCOVERY_MODE
+/*********************************************************************************************************************
+ * @brief Detects which communication port should be used to communicate with
+ * device and opens that connection.
+ * 
+ * @param port Double-pointer to the `sp_port` struct that we are using to communicate with the USB key
+ * 
+ * @returns `OK` if successful
+ */
+deviceErr initDeviceComms (struct sp_port **port) {
+    // Start by getting name of serial port we have the key plugged into
+    std::string serialPortName;
+
+    deviceErr ret = getNewSerialPort(serialPortName);
+    if (ret != OK) {
+        LOG_ERR(ret, "Could not find target serial port. Make sure device is disconnected when program starts");
+        return ret;
+    }
+    LOG_DBG("USB key detected on interface '%s'. Attempting to connect...", serialPortName.c_str());
+
+    int spRet = sp_get_port_by_name(serialPortName.c_str(), port);
+    if (spRet != SP_OK) {
+        ret = ERROR_SERIAL_PORT;
+        LOG_ERR(ret, "Failed to find port with name '%s'", serialPortName.c_str());
+        sp_free_port(*port);
+        return ret;
+    }
+
+    spRet = sp_open(*port, SP_MODE_READ_WRITE);
+    if (spRet != SP_OK) {
+        ret = ERROR_SERIAL_PORT;
+        LOG_ERR(ret, "Failed to open serial port '%s'", serialPortName.c_str());
+        sp_free_port(*port);
+        return ret;
+    }
+
+    return ret;
+}
+#else
 /*********************************************************************************************************************
  * @brief Detects which communication port should be used to communicate with
  * device and opens that connection.
@@ -253,6 +292,7 @@ deviceErr initDeviceComms (struct sp_port **port) {
 
     return OK;
 }
+#endif
 
 /*********************************************************************************************************************
  * @brief Sends command to USB key (3 second timeout)
