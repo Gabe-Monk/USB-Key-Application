@@ -9,3 +9,6 @@ colins_stuff/zmqTest
 colins_stuff/main
 .DS_Store
 */bin
+*.enc
+input.pdf
+input-decrypted.pdf
