@@ -65,11 +65,19 @@ while True:
 
     elif choice == "4":
         fname = input("Enter filename to encrypt: ")
-        # Call the empty placeholder function
-        files.simple_encrypt_file(fname)
+        target_sn = int(input("Enter serial number of target decryptor device:"))
+        files.simple_encrypt_file(fname, target_sn)
 
     elif choice == "5":
         fname = input("Enter .ukey filename to decrypt: ")
+
+        # Get serial number of connected device
+        resp = communication.send_command("GET_STATUS")
+        if resp:
+            device_sn = int(resp.get("data", {}).get('serial'))
+        else:
+            print("Device not responding.")
+
         
         # print("You must authenticate first...")
         # resp = communication.send_command("AUTH_FINGERPRINT")
@@ -77,8 +85,7 @@ while True:
         if True:#resp and resp["data"]["accepted"]:
             print("Auth OK.")
             
-            # Call the empty placeholder function
-            secret_file = files.simple_decrypt_file(fname)
+            secret_file = files.simple_decrypt_file(fname, device_sn)
             
             # Only proceed if a file was actually created
             if secret_file:

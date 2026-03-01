@@ -14,7 +14,7 @@ C_PUB_KEY = "usb_pub.pem"
 C_PRIV_KEY = "usb_priv.pem"
 C_DEC_OUT = "input_decrypted.pdf"
 
-def simple_encrypt_file(target_file):
+def simple_encrypt_file(target_file, target_sn):
     """
     Encrypts any file by preparing a workspace for the rsa_aes_enc C binary.
     The C binary expects specific hardcoded filenames, so we temporarily copy the target 
@@ -40,12 +40,24 @@ def simple_encrypt_file(target_file):
         # 2. Execute the C encryption binary
         subprocess.run([ENC_BIN], check=True)
         
-        # 3. Handle output: Move the resulting 'output.bin' back to the original folder
         if os.path.exists(C_OUTPUT_FILE):
+            # 3: Append the target device's serial number (assuming fixed, 32-bit length)
+            #    to end of encrypted file
+
+            # Read encrypted data
+            with open(C_OUTPUT_FILE, "rb") as f:
+                encrypted_data = f.read()
+            
+            # Append unsigned, 32-bit serial number to end of encrypted data in big-endian manner
+            encrypted_data += target_sn.to_bytes(4, byteorder="big", signed=False)
+
+            # 4. Handle output: Move the resulting encrypted_data into the .ukey file
             if os.path.exists(output_ukey):
                 os.remove(output_ukey) # Overwrite if it already exists
                 
-            shutil.move(C_OUTPUT_FILE, output_ukey)
+            with open(output_ukey, "wb") as f:
+                f.write(encrypted_data)
+
             print(f"Success! Encrypted file created at: {output_ukey}")
             
     except Exception as e:
@@ -56,7 +68,7 @@ def simple_encrypt_file(target_file):
             if os.path.exists(tmp) and os.path.abspath(tmp) != target_abs:
                 os.remove(tmp)
 
-def simple_decrypt_file(target_ukey):
+def simple_decrypt_file(target_ukey, device_sn):
     """
     Retrieves the private key from the hardware, formats it, and uses the rsa_aes_dec binary.
     Outputs the decrypted file as [name]-decrypted.[ext] in the original directory.
@@ -71,6 +83,25 @@ def simple_decrypt_file(target_ukey):
     original_base = ukey_abs.replace(".ukey", "")
     base_name, extension = os.path.splitext(original_base)
     output_decrypted = f"{base_name}-decrypted{extension}"
+
+    # Extract serial number that file targetted its encryption towards
+    try:
+        with open(ukey_abs, "rb") as f:
+            encrypted_data_incl_sn = f.read()
+        
+        if len(encrypted_data_incl_sn) < 4:
+            print("Error: UKEY file too small to contain target serial number.")
+            return None
+        
+        encrypted_data = encrypted_data_incl_sn[:-4]
+        target_sn = int.from_bytes(encrypted_data_incl_sn[-4:], byteorder="big", signed=False)
+
+        if target_sn != device_sn:
+            print(f"Error: Trying to decrypt file encrypted for device {target_sn} with device {device_sn}")
+            return None
+    except Exception as e:
+        print(f"Failed to extract serial number from .ukey file: {e}")
+        return None
 
     # 1. Hardware Key Retrieval via ZMQ request to the C++ hardware communication wrapper
     resp = communication.send_command("GET_SECRET_KEY")
@@ -90,7 +121,10 @@ def simple_decrypt_file(target_ukey):
         # 3. Setup workspace: The decryption binary expects 'output.bin' as its input file
         if os.path.exists(C_OUTPUT_FILE):
             os.remove(C_OUTPUT_FILE)
-        shutil.copy(ukey_abs, C_OUTPUT_FILE)
+        
+        # Write stripped encrypted data (without sn) for C binary
+        with open(C_OUTPUT_FILE, "wb") as f:
+            f.write(encrypted_data)
 
         # 4. Execute Decryption binary
         subprocess.run([DEC_BIN], check=True)
