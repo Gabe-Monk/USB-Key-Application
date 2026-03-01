@@ -53,9 +53,8 @@ while True:
                 for i in range(length):
                     raw_bytes[i] = eeprom.read_byte(i + 2)
                 
-                # Convert to base64 and print
-                b64_str = binascii.b2a_base64(raw_bytes).strip().decode('utf-8')
-                print(b64_str)
+                # Send key to PC
+                print(raw_bytes.decode('utf-8'))
             else:
                 print("error_invalid_length")
         except:
