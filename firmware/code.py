@@ -3,9 +3,10 @@ import sys
 import digitalio
 import binascii
 from eeprom import EepromDevice
+import os
 
-SERIAL_NUM = 0x0001
-FIRMWARE = "1.0.0"
+FIRMWARE = os.getenv("FIRMWARE")
+SERIAL_NUM = os.getenv("SERIAL_NUM")
 
 led = digitalio.DigitalInOut(board.LED)
 led.direction = digitalio.Direction.OUTPUT

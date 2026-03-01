@@ -64,6 +64,8 @@ switch (msg.getCmd()) {
             case AUTH_FINGERPRINT: // TODO:
                 break;
             case GET_SECRET_KEY: {
+                // TODO: Make sure fingerprint confirmed before sending this
+                
                 std::string reply;
                 
                 // Fetch the private key from the device by sending the pc_req_key command.
