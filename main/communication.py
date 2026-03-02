@@ -66,6 +66,20 @@ def send_command(cmd, data=None):
             socket.connect("tcp://localhost:5555")
             
             return None
+        except Exception as e:
+            # 3. IF ANYTHING GOES WRONG (Timeout, Error, etc.)
+            print(f"\n[!] Error: {e}")
+            print("[-] Resetting the connection (Hanging up and redialing)...")
+            
+            # Close the broken socket
+            socket.close(linger=0)
+            
+            # Create a brand new one
+            socket = context.socket(zmq.REQ)
+            socket.setsockopt(zmq.RCVTIMEO, 5000) # Remember the 5s timeout!
+            socket.connect("tcp://localhost:5555")
+            
+            return None
 
 def wait_until_up():
     """

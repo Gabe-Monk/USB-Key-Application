@@ -47,12 +47,12 @@ while True:
 
     elif choice == "3":
         print("Please scan your finger now...")
-        resp = communication.send_command("AUTH_FINGERPRINT", {"timeout_s": 10})
+        resp = communication.send_command("AUTH_FINGERPRINT", {"timeout_s": 10}) # TODO: Make sure this timeout_s thing actually does anything
         if resp and resp.get("ok"):
             print("FINGERPRINT ACCEPTED!")
         elif resp:
             data = resp.get("data", {})
-            print(f"Fingerprint rejected. Error: {data.get('error')}")
+            print(f"Fingerprint rejected. Error: {data.get('error')}") # TODO: Make sure this error thing actually does anything
         else:
             print("FINGERPRINT REJECTED.")
 

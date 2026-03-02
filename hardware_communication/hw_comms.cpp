@@ -49,7 +49,7 @@ int main() {
         
         Json::Value data;
 
-        switch (msg.getCmd()) {
+switch (msg.getCmd()) {
             case UC_GET_STATUS: {
                 std::string reply;
                 CHK(getSerialNumber(reply, port));
@@ -328,10 +328,10 @@ deviceErr initDeviceComms (struct sp_port **port) {
  * 
  * @returns `OK` if successful
  */
-deviceErr sendToKey(deviceCmd cmd, struct sp_port *port) {  
+deviceErr sendToKey(deviceCmd cmd, struct sp_port *port) {   
     // Flush any old data from the buffer
-    sp_flush(port, SP_BUF_BOTH);
-     
+    sp_flush(port, SP_BUF_BOTH); // FIXME: This may be unsafe/unwise here
+
     std::string msg = deviceCmdToStr(cmd);
     std::string msgNoNewline = msg;
     trimTrailingNewlines(msgNoNewline); // Just to erase newline when we print here
