@@ -10,5 +10,5 @@ colins_stuff/main
 .DS_Store
 */bin
 *.enc
-input.pdf
-input-decrypted.pdf
+test-input-decrypted.pdf
+test-input-decrypted.txt
