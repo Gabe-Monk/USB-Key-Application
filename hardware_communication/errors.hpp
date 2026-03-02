@@ -11,7 +11,10 @@ typedef enum {
     OK                     = 0,
     ERROR_GENERIC          = -1,
     ERROR_FAILED_HANDSHAKE = -2,
-    ERROR_SERIAL_PORT      = -3
+    ERROR_SERIAL_PORT      = -3,
+    ERROR_INVALID_LENGTH   = -4,
+    ERROR_UNRECOGNIZED     = -5,
+    ERROR_INIT             = -6
 } deviceErr;
 
 std::string deviceErrToStr(const deviceErr err) {
@@ -19,7 +22,10 @@ std::string deviceErrToStr(const deviceErr err) {
         {OK, "OK"},
         {ERROR_GENERIC, "ERROR_GENERIC"},
         {ERROR_FAILED_HANDSHAKE, "ERROR_FAILED_HANDSHAKE"},
-        {ERROR_SERIAL_PORT, "ERROR_SERIAL_PORT"}
+        {ERROR_SERIAL_PORT, "ERROR_SERIAL_PORT"},
+        {ERROR_INVALID_LENGTH, "ERROR_INVALID_LENGTH"},
+        {ERROR_UNRECOGNIZED, "ERROR_UNRECOGNIZED"},
+        {ERROR_INIT, "ERROR_INIT"}
     };
     
     auto it = errMap.find(err);

@@ -104,7 +104,7 @@ def simple_decrypt_file(target_ukey, device_sn):
         return None
 
     # 1. Hardware Key Retrieval via ZMQ request to the C++ hardware communication wrapper
-    resp = communication.send_command("GET_SECRET_KEY")
+    resp = communication.send_command("GET_PRIVATE_KEY")
     if not resp or not resp.get("ok"):
         print("Error: Could not retrieve key from hardware.")
         return None

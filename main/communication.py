@@ -18,6 +18,7 @@ socket.connect("tcp://localhost:5555")
 
 current_decrypted_file = None
 running = True
+socket_lock = threading.Lock()
 
 # ---------------------------------------------------------
 # FUNCTIONS
@@ -42,28 +43,29 @@ def send_command(cmd, data=None):
     
     json_str = json.dumps(msg)
     
-    try:
-        # 1. Try to send
-        socket.send_string(json_str)
-        
-        # 2. Try to receive
-        reply_str = socket.recv_string()
-        return json.loads(reply_str)
+    with socket_lock:
+        try:
+            # 1. Try to send
+            socket.send_string(json_str)
+            
+            # 2. Try to receive
+            reply_str = socket.recv_string()
+            return json.loads(reply_str)
 
-    except Exception as e:
-        # 3. IF ANYTHING GOES WRONG (Timeout, Error, etc.)
-        print(f"\n[!] Error: {e}")
-        print("[-] Resetting the connection (Hanging up and redialing)...")
-        
-        # Close the broken socket
-        socket.close(linger=0)
-        
-        # Create a brand new one
-        socket = context.socket(zmq.REQ)
-        socket.setsockopt(zmq.RCVTIMEO, 5000) # Remember the 5s timeout!
-        socket.connect("tcp://localhost:5555")
-        
-        return None
+        except Exception as e:
+            # 3. IF ANYTHING GOES WRONG (Timeout, Error, etc.)
+            print(f"\n[!] Error: {e}")
+            print("[-] Resetting the connection (Hanging up and redialing)...")
+            
+            # Close the broken socket
+            socket.close(linger=0)
+            
+            # Create a brand new one
+            socket = context.socket(zmq.REQ)
+            socket.setsockopt(zmq.RCVTIMEO, 5000) # Remember the 5s timeout!
+            socket.connect("tcp://localhost:5555")
+            
+            return None
 
 def wait_until_up():
     """
