@@ -23,7 +23,9 @@ const std::map<deviceCmd, std::string> deviceCmdMap = {
     {HANDSHAKE_HELLO, "pc_hello\n"},
     {GET_SERIAL_NUMBER, "pc_req_sn\n"},
     {GET_FIRMWARE_VERSION, "pc_req_fw\n"},
-    {GET_PRIVATE_KEY, "pc_req_key\n"}
+    {GET_PRIVATE_KEY, "pc_req_key\n"},
+    {ADD_FINGERPRINT, "pc_enroll_fingerprint\n"},
+    {AUTH_FINGERPRINT, "pc_authenticate_fingerprint\n"}
 };
 
 /**
@@ -48,5 +50,7 @@ deviceErr performHandshake(struct sp_port *port);
 deviceErr getSerialNumber(std::string &sn, struct sp_port *port);
 deviceErr getFirmware(std::string &fw, struct sp_port *port);
 deviceErr getPrivateKey(std::string &key, struct sp_port *port);
+deviceErr addFingerprint(std::string &resp, struct sp_port *port);
+deviceErr authFingerprint(std::string &resp, struct sp_port *port);
 
 #endif

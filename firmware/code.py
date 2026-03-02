@@ -4,6 +4,7 @@ import digitalio
 import binascii
 from eeprom import EepromDevice
 import os
+from UART_fingerprint import FingerprintSensor
 
 FIRMWARE = os.getenv("FIRMWARE")
 SERIAL_NUM = os.getenv("SERIAL_NUM")
@@ -12,6 +13,7 @@ led = digitalio.DigitalInOut(board.LED)
 led.direction = digitalio.Direction.OUTPUT
 
 eeprom = EepromDevice(scl_pin=board.GP5, sda_pin=board.GP4)
+fingerprint = FingerprintSensor(uart_tx=board.GP0, uart_rx=board.GP1, rst_pin=board.GP22, wake_pin=board.GP21)
 
 # # Example: Write and read a byte
 # print("Writing 0xDEADBEEF to address 0x10...")
@@ -60,6 +62,10 @@ while True:
                 print("error_invalid_length")
         except:
             print("error_eeprom_read")
+    elif line == 'pc_enroll_fingerprint':
+        fingerprint.decode_request(0x01)
+    elif line == 'pc_authenticate_fingerprint':
+        fingerprint.decode_request(0x0C)
 
     else:
         print("unrecognized value received ('" + line + "')")

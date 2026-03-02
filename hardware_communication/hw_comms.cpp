@@ -59,9 +59,29 @@ switch (msg.getCmd()) {
                 data["fingerprint_enrolled"] = false; // TODO:
                 break;
             }
-            case ENROLL_FINGERPRINT: // TODO:
+            case ENROLL_FINGERPRINT: // NEEDS TESTING
+                std::string resp;
+                // passing resp to capture response for pc_enroll_fingerprint command
+                // NOTE: command is currently very verbose, need to reduce output on Key end
+                deviceErr err = addFingerprint(resp, port);
+                if (err == OK) {
+                    //some logic
+                }
+                else {
+                    //some logic
+                }
                 break; 
-            case AUTH_FINGERPRINT: // TODO:
+            case AUTH_FINGERPRINT: // NEEDS TESTING
+                std::string resp;
+                // passing resp to capture response for pc_authenticate_fingerprint command
+                // NOTE: command is currently very verbose, need to reduce output on Key end
+                deviceErr err = authFingerprint(resp, port);
+                if (err == OK) {
+                    //some logic
+                }
+                else {
+                    //some logic
+                }
                 break;
             case GET_SECRET_KEY: {
                 // TODO: Make sure fingerprint confirmed before sending this
@@ -437,5 +457,16 @@ deviceErr getPrivateKey(std::string &key, struct sp_port *port) {
     CHK(sendToKey(GET_PRIVATE_KEY, port));
     // Increase read timeout logic implicitly by allowing readFromKey to handle it
     CHK(readFromKey(key, port));
+    return OK;
+}
+
+deviceErr addFingerprint(std::string &resp, struct sp_port *port) {
+    CHK(sendToKey(ADD_FINGERPRINT, port));
+    CHK(readFromKey(resp, port));
+    return OK;
+}
+deviceErr authFingerprint(std::string &resp, struct sp_port *port) {
+    CHK(sendToKey(AUTH_FINGERPRINT, port));
+    CHK(readFromKey(resp, port));
     return OK;
 }
