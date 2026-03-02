@@ -8,20 +8,20 @@
 
 // Expected commands received from main program
 typedef enum {
-    UNKNOWN_USER_CMD = 0,
-    GET_STATUS,
-    ENROLL_FINGERPRINT,
-    AUTH_FINGERPRINT,
-    GET_SECRET_KEY,
-    WD_HEARTBEAT
+    UC_UNKNOWN_USER_CMD = 0,
+    UC_GET_STATUS,
+    UC_ENROLL_FINGERPRINT,
+    UC_AUTH_FINGERPRINT,
+    UC_GET_PRIVATE_KEY,
+    UC_WD_HEARTBEAT
 } userCmd;
 
 const std::map<std::string, userCmd> userCmdMap = {
-    {"GET_STATUS", GET_STATUS},
-    {"ENROLL_FINGERPRINT", ENROLL_FINGERPRINT},
-    {"AUTH_FINGERPRINT", AUTH_FINGERPRINT},
-    {"GET_SECRET_KEY", GET_SECRET_KEY},
-    {"WD_HEARTBEAT", WD_HEARTBEAT}
+    {"GET_STATUS", UC_GET_STATUS},
+    {"ENROLL_FINGERPRINT", UC_ENROLL_FINGERPRINT},
+    {"AUTH_FINGERPRINT", UC_AUTH_FINGERPRINT},
+    {"GET_PRIVATE_KEY", UC_GET_PRIVATE_KEY},
+    {"WD_HEARTBEAT", UC_WD_HEARTBEAT}
 };
 
 /**
@@ -36,7 +36,7 @@ userCmd stringToUserCmd(const std::string& cmdStr) {
     if (it != userCmdMap.end()) {
         return it->second;
     }
-    return UNKNOWN_USER_CMD;
+    return UC_UNKNOWN_USER_CMD;
 }
 
 /**

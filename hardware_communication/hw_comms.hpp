@@ -8,11 +8,13 @@
 #define DEBUG_SIMPLE_DISCOVERY_MODE // Uncomment this to use simplified discovery for VM work
 
 typedef enum {
-    UNKNOWN_DEVICE_CMD = 0,
-    HANDSHAKE_HELLO,
-    GET_SERIAL_NUMBER,
-    GET_FIRMWARE_VERSION,
-    GET_PRIVATE_KEY
+    DC_UNKNOWN_DEVICE_CMD = 0,
+    DC_HANDSHAKE_HELLO,
+    DC_GET_SERIAL_NUMBER,
+    DC_GET_FIRMWARE_VERSION,
+    DC_GET_PRIVATE_KEY,
+    DC_ENROLL_FINGERPRINT,
+    DC_AUTH_FINGERPRINT
 } deviceCmd;
 
 /**
@@ -20,12 +22,12 @@ typedef enum {
  * to implement that command
  */ 
 const std::map<deviceCmd, std::string> deviceCmdMap = {
-    {HANDSHAKE_HELLO, "pc_hello\n"},
-    {GET_SERIAL_NUMBER, "pc_req_sn\n"},
-    {GET_FIRMWARE_VERSION, "pc_req_fw\n"},
-    {GET_PRIVATE_KEY, "pc_req_key\n"},
-    {ADD_FINGERPRINT, "pc_enroll_fingerprint\n"},
-    {AUTH_FINGERPRINT, "pc_authenticate_fingerprint\n"}
+    {DC_HANDSHAKE_HELLO, "pc_hello\n"},
+    {DC_GET_SERIAL_NUMBER, "pc_req_sn\n"},
+    {DC_GET_FIRMWARE_VERSION, "pc_req_fw\n"},
+    {DC_GET_PRIVATE_KEY, "pc_req_key\n"},
+    {DC_ENROLL_FINGERPRINT, "pc_enroll_fingerprint\n"},
+    {DC_AUTH_FINGERPRINT, "pc_authenticate_fingerprint\n"}
 };
 
 /**

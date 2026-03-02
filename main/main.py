@@ -9,19 +9,9 @@ communication.wait_until_up()
 communication.start_watchdog()
 
 # ---------------------------------------------------------
-# HANDSHAKE
+# TODO: HANDSHAKE
 # ---------------------------------------------------------
-while True:
-    # --- CHANGE IS HERE ---
-    # We print this first so it shows up in the Docker logs!
-    print("Please type 'hello' to start: ")
-    txt = input() 
-    # ----------------------
-    
-    if txt.strip() == "hello": # added strip() just in case of spaces
-        break
 
-print("\nSystem Online.")
 
 # ---------------------------------------------------------
 # MENU LOOP
@@ -58,10 +48,13 @@ while True:
     elif choice == "3":
         print("Please scan your finger now...")
         resp = communication.send_command("AUTH_FINGERPRINT", {"timeout_s": 10})
-        if resp and resp["data"].get("accepted"):
+        if resp and resp.get("ok"):
             print("FINGERPRINT ACCEPTED!")
+        elif resp:
+            data = resp.get("data", {})
+            print(f"Fingerprint rejected. Error: {data.get('error')}")
         else:
-            print("REJECTED.")
+            print("FINGERPRINT REJECTED.")
 
     elif choice == "4":
         fname = input("Enter filename to encrypt: ")

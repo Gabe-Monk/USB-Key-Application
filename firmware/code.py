@@ -15,22 +15,6 @@ led.direction = digitalio.Direction.OUTPUT
 eeprom = EepromDevice(scl_pin=board.GP5, sda_pin=board.GP4)
 fingerprint = FingerprintSensor(uart_tx=board.GP0, uart_rx=board.GP1, rst_pin=board.GP22, wake_pin=board.GP21)
 
-# # Example: Write and read a byte
-# print("Writing 0xDEADBEEF to address 0x10...")
-# eeprom.write_word(0x10, 0xDEADBEEF)
-
-# print("Reading back value...")
-# val = eeprom.read_word(0x10)
-# print("Read:", hex(val))
-
-# print('Reading all non-default memory values (default is 0xFF)')
-# i = 0
-# while i <= 0xFF:
-#     val = eeprom.read_byte(i)
-#     if (val != 0xFF):
-#         print(hex(i), ":", hex(val))
-#     i += 1
-
 while True:
     line = sys.stdin.readline().rstrip('\r\n')
 
@@ -68,6 +52,6 @@ while True:
         fingerprint.decode_request(0x0C)
 
     else:
-        print("unrecognized value received ('" + line + "')")
+        print("error_unrecognized: unrecognized value received ('" + line + "')")
 
     led.value = not led.value

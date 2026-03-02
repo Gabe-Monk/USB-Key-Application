@@ -39,7 +39,7 @@ int main() {
         CmdMsg msg(request);
 
         // Don't bother logging heartbeats
-        if (msg.getCmd() != WD_HEARTBEAT) {
+        if (msg.getCmd() != UC_WD_HEARTBEAT) {
             LOG_DBG("Got message (type %s)", userCmdToStr(msg.getCmd()).c_str());
         }
 
@@ -49,8 +49,8 @@ int main() {
         
         Json::Value data;
 
-switch (msg.getCmd()) {
-            case GET_STATUS: {
+        switch (msg.getCmd()) {
+            case UC_GET_STATUS: {
                 std::string reply;
                 CHK(getSerialNumber(reply, port));
                 data["serial"] = reply;
@@ -59,31 +59,35 @@ switch (msg.getCmd()) {
                 data["fingerprint_enrolled"] = false; // TODO:
                 break;
             }
-            case ENROLL_FINGERPRINT: // NEEDS TESTING
+            case UC_ENROLL_FINGERPRINT: { // TODO: NEEDS TESTING
                 std::string resp;
                 // passing resp to capture response for pc_enroll_fingerprint command
                 // NOTE: command is currently very verbose, need to reduce output on Key end
                 deviceErr err = addFingerprint(resp, port);
                 if (err == OK) {
-                    //some logic
+                    response["ok"] = true;
                 }
                 else {
-                    //some logic
+                    response["ok"] = false;
+                    data["error"] = deviceErrToStr(err);
                 }
                 break; 
-            case AUTH_FINGERPRINT: // NEEDS TESTING
+            }
+            case UC_AUTH_FINGERPRINT: { // TODO: NEEDS TESTING
                 std::string resp;
                 // passing resp to capture response for pc_authenticate_fingerprint command
                 // NOTE: command is currently very verbose, need to reduce output on Key end
                 deviceErr err = authFingerprint(resp, port);
                 if (err == OK) {
-                    //some logic
+                    response["ok"] = true;
                 }
                 else {
-                    //some logic
+                    response["ok"] = false;
+                    data["error"] = deviceErrToStr(err);
                 }
                 break;
-            case GET_SECRET_KEY: {
+            }
+            case UC_GET_PRIVATE_KEY: {
                 // TODO: Make sure fingerprint confirmed before sending this
                 
                 std::string reply;
@@ -105,7 +109,7 @@ switch (msg.getCmd()) {
                 }
                 break;
             }
-            case WD_HEARTBEAT:
+            case UC_WD_HEARTBEAT:
                 data["device_connected"] = true; // TODO:
                 break;
             default: // TODO: We should implement some handling for this scenario on both ends of the communication. I've put some boilerplate here for now
@@ -324,7 +328,10 @@ deviceErr initDeviceComms (struct sp_port **port) {
  * 
  * @returns `OK` if successful
  */
-deviceErr sendToKey(deviceCmd cmd, struct sp_port *port) {   
+deviceErr sendToKey(deviceCmd cmd, struct sp_port *port) {  
+    // Flush any old data from the buffer
+    sp_flush(port, SP_BUF_BOTH);
+     
     std::string msg = deviceCmdToStr(cmd);
     std::string msgNoNewline = msg;
     trimTrailingNewlines(msgNoNewline); // Just to erase newline when we print here
@@ -355,7 +362,7 @@ deviceErr sendToKey(deviceCmd cmd, struct sp_port *port) {
 deviceErr readFromKey(std::string &msg, struct sp_port *port) {
     LOG_DBG("Reading...");
     // Receive comms from Pico
-    // char buf[100];
+    // char buf[512];
     // int bytes_read = sp_blocking_read(port, buf, sizeof(buf), 5000); // 5 sec timeout
     char buf[512];
     int bytes_read = 0;
@@ -389,6 +396,25 @@ deviceErr readFromKey(std::string &msg, struct sp_port *port) {
         trimTrailingNewlines(buf);
         msg = buf;
         LOG_DBG("Received: %s", buf);
+
+        std::string unrecognizedErrorPrefix = "error_unrecognized";
+        std::string initErrorPrefix = "error_init";
+        std::string fingerprintErrorPrefix = "error_fingerprint_sensor";
+
+        // Check for known error codes in read message
+        if (msg == "error_invalid_length") {
+            ret = ERROR_INVALID_LENGTH;
+            LOG_ERR(ret, "Private key had invalid length");
+        } else if (msg.compare(0, unrecognizedErrorPrefix.size(), unrecognizedErrorPrefix) == 0) {
+            ret = ERROR_UNRECOGNIZED;
+            LOG_ERR(ret, "Microcontroller claims: %s", msg.c_str());
+        } else if (msg.compare(0, initErrorPrefix.size(), initErrorPrefix) == 0) {
+            ret = ERROR_INIT;
+            LOG_ERR(ret, "Microcontroller failed initiation: %s", msg.c_str());
+        } else if (msg.compare(0, fingerprintErrorPrefix.size(), fingerprintErrorPrefix) == 0) {
+            ret = ERROR_FINGERPRINT;
+            LOG_ERR(ret, "Fingerprint sensor error: %s", msg.c_str());
+        }
     } else {
         ret = ERROR_GENERIC;
         LOG_ERR(ret, "No data received");
@@ -406,10 +432,8 @@ deviceErr readFromKey(std::string &msg, struct sp_port *port) {
  */
 deviceErr performHandshake(struct sp_port *port) {
     deviceErr ret = OK;
-    // Flush any old data from the buffer
-    sp_flush(port, SP_BUF_BOTH);
 
-    CHK(sendToKey(HANDSHAKE_HELLO, port));
+    CHK(sendToKey(DC_HANDSHAKE_HELLO, port));
     std::string reply;
     CHK(readFromKey(reply, port));
     
@@ -433,7 +457,7 @@ deviceErr performHandshake(struct sp_port *port) {
  * @returns `OK` if successful
  */
 deviceErr getSerialNumber(std::string &sn, struct sp_port *port) {
-    CHK(sendToKey(GET_SERIAL_NUMBER, port));
+    CHK(sendToKey(DC_GET_SERIAL_NUMBER, port));
     CHK(readFromKey(sn, port));
     return OK;
 }
@@ -447,26 +471,33 @@ deviceErr getSerialNumber(std::string &sn, struct sp_port *port) {
  * @returns `OK` if successful
  */
 deviceErr getFirmware(std::string &fw, struct sp_port *port) {
-    CHK(sendToKey(GET_FIRMWARE_VERSION, port));
+    CHK(sendToKey(DC_GET_FIRMWARE_VERSION, port));
     CHK(readFromKey(fw, port));
     return OK;
 }
 
 /*********************************************************************************************************************/
 deviceErr getPrivateKey(std::string &key, struct sp_port *port) {
-    CHK(sendToKey(GET_PRIVATE_KEY, port));
+    CHK(sendToKey(DC_GET_PRIVATE_KEY, port));
     // Increase read timeout logic implicitly by allowing readFromKey to handle it
     CHK(readFromKey(key, port));
     return OK;
 }
 
 deviceErr addFingerprint(std::string &resp, struct sp_port *port) {
-    CHK(sendToKey(ADD_FINGERPRINT, port));
+    CHK(sendToKey(DC_ENROLL_FINGERPRINT, port));
     CHK(readFromKey(resp, port));
+    if (resp != "added") {
+        return ERROR_FINGERPRINT;
+    }
     return OK;
 }
+
 deviceErr authFingerprint(std::string &resp, struct sp_port *port) {
-    CHK(sendToKey(AUTH_FINGERPRINT, port));
+    CHK(sendToKey(DC_AUTH_FINGERPRINT, port));
     CHK(readFromKey(resp, port));
+    if (resp != "matched") {
+        return ERROR_FINGERPRINT;
+    }
     return OK;
 }

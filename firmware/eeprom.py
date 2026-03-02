@@ -19,7 +19,7 @@ class EepromDevice:
             attempts += 1
         
         if attempts >= max_attempts:
-            print('Failed to init EEPROM device - I2C bus not available')
+            print('error_init: Failed to init EEPROM device - I2C bus not available')
             return
 
         self.i2c_bus.unlock()

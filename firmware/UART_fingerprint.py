@@ -44,12 +44,12 @@ class FingerprintSensor:
         
 
     def hard_reset(self):
-        print("Resetting fingerprint sensor...")
+        # print("Resetting fingerprint sensor...")
         self.rst_pin.value = False
         time.sleep(0.1)
         self.rst_pin.value = True
         time.sleep(0.8)
-        print("Reset complete.")
+        # print("Reset complete.")
 
     # Perform a CheckSUM as verified per datasheet on packet
     def CheckSUM(self, command_buf):
@@ -68,7 +68,7 @@ class FingerprintSensor:
 
         command_sent = packet[1]
         self.uart.write(bytes(packet))
-        print("Sent:", packet)
+        # print("Sent:", packet)
 
         time.sleep(0.05)
         buf = bytearray()
@@ -79,7 +79,7 @@ class FingerprintSensor:
 
             if self.uart.in_waiting:
                 byte = self.uart.read(1)
-                print ("Byte:", byte)
+                # print ("Byte:", byte)
                 if not byte:
                     continue
 
@@ -115,81 +115,7 @@ class FingerprintSensor:
 
                     return buf
         return None
-
-    # Function for adding fingerprint
-    def add_fingerprint(self, ID=0, permission=1):
-        # change later, provide id by counting number of existing users but for now hardcode id for testing purposes
-        id = 0
-        # build command buffer using format specified by data sheet
-        command_buf =[self.CMD_HEAD, self.CMD_ADD_1, 0, id+1, permission, 0]
-        command = self.CheckSUM(command_buf)
-        response = self.send_packet(command)
-        print ("response:", response)
-        if not response:
-            print ("No response")
-            return self.ACK_FAIL
-        if response[4] == self.ACK_SUCCESS:
-            command_buf =[self.CMD_HEAD, self.CMD_ADD_2, 0, id+1, permission, 0]
-            command = self.CheckSUM(command_buf)
-            response = self.send_packet(command)
-            if response[4] == self.ACK_SUCCESS:
-                command_buf = [self.CMD_HEAD, self.CMD_ADD_3, 0, id+1, permission, 0]
-                command = self.CheckSUM(command_buf)
-                response = self.send_packet(command)
-                if response[4] == self.ACK_SUCCESS:
-                    print("User %d is added to database successfully" %(id+1))
-                    return self.ACK_SUCCESS
-                elif response[4] == self.ACK_TIMEOUT:
-                    print("Failed： Timeout！")
-                    return self.ACK_TIMEOUT
-                else:
-                    print("Failed !")
-                    return self.ACK_FAIL
-
-            elif response[4] == self.ACK_TIMEOUT:
-                print("Failed： Timeout！")
-                return self.ACK_TIMEOUT
-            else:
-                print("Failed !")
-            return self.ACK_FAIL
-        elif response[4] == self.ACK_TIMEOUT:
-            print("Failed： Timeout！")
-            return self.ACK_TIMEOUT
-        elif response[4] == self.ACK_FULL:
-            print("The database is full!")
-            return self.ACK_FULL
-        elif response[4] == self.ACK_USR_OCCUPIED:
-            print ("The User already exists, please change the id and test again!")
-            return self.ACK_USR_OCCUPIED
-        elif response[4] == self.ACK_FINGER_OCCUPIED:
-            print ("The fingerprint already exists, please change a finger and test again!")
-            return self.ACK_FINGER_OCCUPIED
-        else:
-            print("Failed !")
-            return self.ACK_FAIL
-
-    # Function to verify user
-    def verify_user(self):
-        command_buf = [self.CMD_HEAD, self.CMD_MATCH, 0, 0, 0, 0]
-        command = self.CheckSUM(command_buf)
-        response = self.send_packet(command)
-        time.sleep(0.5)
-
-        if response[4] == 1 or response[4] == 2 or response[4] == 3:
-            ID = response[2] + response[3]
-            permission = response[4]
-            print("The user %d is matched, permission is %d"%(ID, permission))
-            return self.ACK_SUCCESS
-        elif response[4] == self.ACK_TIMEOUT:
-            print("Failed: Time out !")
-            return self.ACK_TIMEOUT
-        elif response[4] == self.ACK_NO_USER:
-            print("Failed: There is no matched fingerprint.")
-            return self.ACK_NO_USER
-        else:
-            print("Failed！")
-            return self.ACK_FAIL
-        
+    
     # Function to get count of total number of users currently registered
     def get_user_count(self):
         command_buf = [self.CMD_HEAD, self.CMD_USER_CNT, 0, 0, 0, 0]
@@ -199,7 +125,7 @@ class FingerprintSensor:
             finger_account = response[2] + response[3]
             return finger_account
         else:
-            print("Failed to query the account!")
+            print("error_fingerprint_sensor: Failed to query the account!")
             return self.ACK_FAIL
         
     def delete_all_users(self):
@@ -211,35 +137,114 @@ class FingerprintSensor:
         if response[4] == self.ACK_SUCCESS:
             return self.ACK_SUCCESS
         else:
-            print ("Failed to delete all users!")
+            print ("error_fingerprint_sensor: Failed to delete all users!")
+            return self.ACK_FAIL
+
+    # Function for adding fingerprint
+    def add_fingerprint(self, ID=0, permission=1):
+        # TODO: change later, provide id by counting number of existing users but for now hardcode id for testing purposes
+        self.delete_all_users()
+        id = 0
+        # build command buffer using format specified by data sheet
+        command_buf =[self.CMD_HEAD, self.CMD_ADD_1, 0, id+1, permission, 0]
+        command = self.CheckSUM(command_buf)
+        response = self.send_packet(command)
+        # print ("response:", response)
+        if not response:
+            print ("error_fingerprint_sensor: No response")
+            return self.ACK_FAIL
+        if response[4] == self.ACK_SUCCESS:
+            command_buf =[self.CMD_HEAD, self.CMD_ADD_2, 0, id+1, permission, 0]
+            command = self.CheckSUM(command_buf)
+            response = self.send_packet(command)
+            if response[4] == self.ACK_SUCCESS:
+                command_buf = [self.CMD_HEAD, self.CMD_ADD_3, 0, id+1, permission, 0]
+                command = self.CheckSUM(command_buf)
+                response = self.send_packet(command)
+                if response[4] == self.ACK_SUCCESS:
+                    # print("User %d is added to database successfully" %(id+1))
+                    return self.ACK_SUCCESS
+                elif response[4] == self.ACK_TIMEOUT:
+                    print("error_fingerprint_sensor: Failed： Timeout！")
+                    return self.ACK_TIMEOUT
+                else:
+                    print("error_fingerprint_sensor: Failed !")
+                    return self.ACK_FAIL
+
+            elif response[4] == self.ACK_TIMEOUT:
+                print("error_fingerprint_sensor: Failed： Timeout！")
+                return self.ACK_TIMEOUT
+            else:
+                print("error_fingerprint_sensor: Failed !")
+            return self.ACK_FAIL
+        elif response[4] == self.ACK_TIMEOUT:
+            print("error_fingerprint_sensor: Failed： Timeout！")
+            return self.ACK_TIMEOUT
+        elif response[4] == self.ACK_FULL:
+            print("error_fingerprint_sensor: The database is full!")
+            return self.ACK_FULL
+        elif response[4] == self.ACK_USR_OCCUPIED:
+            print ("error_fingerprint_sensor: The User already exists, please change the id and test again!")
+            return self.ACK_USR_OCCUPIED
+        elif response[4] == self.ACK_FINGER_OCCUPIED:
+            print ("error_fingerprint_sensor: The fingerprint already exists, please change a finger and test again!")
+            return self.ACK_FINGER_OCCUPIED
+        else:
+            print("error_fingerprint_sensor: Failed !")
+            return self.ACK_FAIL
+
+    # Function to verify user
+    def verify_user(self):
+        command_buf = [self.CMD_HEAD, self.CMD_MATCH, 0, 0, 0, 0]
+        command = self.CheckSUM(command_buf)
+        response = self.send_packet(command)
+        time.sleep(0.5)
+
+        if not response:
+            print("error_fingerprint_sensor: Failed: Time out !")
+            return self.ACK_TIMEOUT
+
+        if response[4] == 1 or response[4] == 2 or response[4] == 3:
+            ID = response[2] + response[3]
+            permission = response[4]
+            # print("The user %d is matched, permission is %d"%(ID, permission))
+            return self.ACK_SUCCESS
+        elif response[4] == self.ACK_TIMEOUT:
+            print("error_fingerprint_sensor: Failed: Time out !")
+            return self.ACK_TIMEOUT
+        elif response[4] == self.ACK_NO_USER:
+            print("error_fingerprint_sensor: Failed: There is no matched fingerprint.")
+            return self.ACK_NO_USER
+        else:
+            print("error_fingerprint_sensor: Failed！")
             return self.ACK_FAIL
         
     # Translates request number to request execution and response
     def decode_request(self, request):
         if request == self.CMD_ADD_1:
-            print ("Adding new user... place finger on fingperprint sensor")
-            print ("Add fingerprint  (Put your finger on sensor until successfully/failed information returned) ")
+            # print ("Adding new user... place finger on fingperprint sensor")
+            # print ("Add fingerprint  (Put your finger on sensor until successfully/failed information returned) ")
             rc = self.add_fingerprint()
             if rc == self.ACK_SUCCESS:
-                print ("Fingerprint added successfully !")
+                print ("added")
             elif rc == self.ACK_FAIL:
-                print ("Failed: Please try to place the center of the fingerprint flat to sensor, or this fingerprint already exists !")
+                print ("error_fingerprint_sensor: Failed: Please try to place the center of the fingerprint flat to sensor, or this fingerprint already exists !")
             elif rc == self.ACK_FULL:
-                print ("Failed: The fingerprint library is full !") 
+                print ("error_fingerprint_sensor: Failed: The fingerprint library is full !") 
         elif request == self.CMD_MATCH:
-            print ("Verifying fingerprint... place finger on fingerprint sensor")
+            # print ("Verifying fingerprint... place finger on fingerprint sensor")
             rc = self.verify_user()
             if rc == self.ACK_SUCCESS:
-                print ("Matching successful !")
+                print ("matched")
                 return 0
             elif rc == self.ACK_NO_USER:
-                print ("Failed: This fingerprint was not found in the library !")
+                print ("error_fingerprint_sensor: Failed: This fingerprint was not found in the library !")
                 return 1
             elif rc == self.ACK_TIMEOUT:
-                print ("Failed: Time out !")
+                print ("error_fingerprint_sensor: Failed: Time out !")
                 return 1
             elif rc == self.ACK_GO_OUT:
-                print ("Failed: Please try to place the center of the fingerprint flat to sensor !")
+                print ("error_fingerprint_sensor: Failed: Please try to place the center of the fingerprint flat to sensor !")
                 return 1
         elif request == self.CMD_USER_CNT:
             count = self.get_user_count()
@@ -249,8 +254,8 @@ class FingerprintSensor:
             if rc == self.ACK_SUCCESS:
                 print ("All users deleted successfully!")
             elif rc == self.ACK_TIMEOUT:
-                print ("Failed: Time out!")
+                print ("error_fingerprint_sensor: Failed: Time out!")
             elif rc == self.ACK_FAIL:
-                print ("Failed to delete all users!")
+                print ("error_fingerprint_sensor: Failed to delete all users!")
 
 
