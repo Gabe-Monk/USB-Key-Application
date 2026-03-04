@@ -414,6 +414,9 @@ deviceErr readFromKey(std::string &msg, struct sp_port *port) {
         } else if (msg.compare(0, fingerprintErrorPrefix.size(), fingerprintErrorPrefix) == 0) {
             ret = ERROR_FINGERPRINT;
             LOG_ERR(ret, "Fingerprint sensor error: %s", msg.c_str());
+        } else if (msg == "error_auth_req") {
+            ret = ERROR_AUTH_REQ;
+            LOG_ERR(ret, "Operation blocked as it requires fingerprint authentication");
         }
     } else {
         ret = ERROR_GENERIC;
