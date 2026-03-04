@@ -201,7 +201,6 @@ class FingerprintSensor:
         time.sleep(0.5)
 
         if not response:
-            print("error_fingerprint_sensor: Failed: Time out !")
             return self.ACK_TIMEOUT
 
         if response[4] == 1 or response[4] == 2 or response[4] == 3:
