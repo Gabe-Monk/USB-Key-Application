@@ -75,7 +75,7 @@ class FingerprintSensor:
         start = False
         start_time = time.monotonic()
 
-        while time.monotonic() - start_time < 10:
+        while time.monotonic() - start_time < 5:
 
             if self.uart.in_waiting:
                 byte = self.uart.read(1)

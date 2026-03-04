@@ -10,8 +10,9 @@ import os
 # print("Setting up connection...")
 context = zmq.Context()
 socket = context.socket(zmq.REQ)
-# Increase timeout to 5 seconds to match the C++ simulator
-socket.setsockopt(zmq.RCVTIMEO, 5000) 
+# Increase timeout to 5.1 seconds to be greater than 5 second timeout 
+# on fingerprint sensor
+socket.setsockopt(zmq.RCVTIMEO, 5100) 
 
 # print("Connecting to hardware interface on port 5555...")
 socket.connect("tcp://localhost:5555")

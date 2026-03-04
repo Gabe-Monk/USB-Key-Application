@@ -373,7 +373,7 @@ deviceErr readFromKey(std::string &msg, struct sp_port *port) {
     // But since sp_blocking_read waits, we rely on its internal timeout.
     while (bytes_read < sizeof(buf) - 1) {
         char c;
-        int spRet = sp_blocking_read(port, &c, 1, 3000);  // read 1 byte at a time
+        int spRet = sp_blocking_read(port, &c, 1, 5200);  // read 1 byte at a time
         if (spRet <= 0) {
             // timeout or error
             break;
