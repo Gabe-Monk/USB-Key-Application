@@ -137,7 +137,6 @@ class FingerprintSensor:
         if response[4] == self.ACK_SUCCESS:
             return self.ACK_SUCCESS
         else:
-            print ("error_fingerprint_sensor: Failed to delete all users!")
             return self.ACK_FAIL
 
     # Function for adding fingerprint
@@ -151,7 +150,7 @@ class FingerprintSensor:
         response = self.send_packet(command)
         # print ("response:", response)
         if not response:
-            print ("error_fingerprint_sensor: No response")
+            # print ("error_fingerprint_sensor: No response")
             return self.ACK_FAIL
         if response[4] == self.ACK_SUCCESS:
             command_buf =[self.CMD_HEAD, self.CMD_ADD_2, 0, id+1, permission, 0]
@@ -165,32 +164,23 @@ class FingerprintSensor:
                     # print("User %d is added to database successfully" %(id+1))
                     return self.ACK_SUCCESS
                 elif response[4] == self.ACK_TIMEOUT:
-                    print("error_fingerprint_sensor: Failed： Timeout！")
                     return self.ACK_TIMEOUT
                 else:
-                    print("error_fingerprint_sensor: Failed !")
                     return self.ACK_FAIL
 
             elif response[4] == self.ACK_TIMEOUT:
-                print("error_fingerprint_sensor: Failed： Timeout！")
                 return self.ACK_TIMEOUT
-            else:
-                print("error_fingerprint_sensor: Failed !")
+            
             return self.ACK_FAIL
         elif response[4] == self.ACK_TIMEOUT:
-            print("error_fingerprint_sensor: Failed： Timeout！")
             return self.ACK_TIMEOUT
         elif response[4] == self.ACK_FULL:
-            print("error_fingerprint_sensor: The database is full!")
             return self.ACK_FULL
         elif response[4] == self.ACK_USR_OCCUPIED:
-            print ("error_fingerprint_sensor: The User already exists, please change the id and test again!")
             return self.ACK_USR_OCCUPIED
         elif response[4] == self.ACK_FINGER_OCCUPIED:
-            print ("error_fingerprint_sensor: The fingerprint already exists, please change a finger and test again!")
             return self.ACK_FINGER_OCCUPIED
         else:
-            print("error_fingerprint_sensor: Failed !")
             return self.ACK_FAIL
 
     # Function to verify user
@@ -209,13 +199,10 @@ class FingerprintSensor:
             # print("The user %d is matched, permission is %d"%(ID, permission))
             return self.ACK_SUCCESS
         elif response[4] == self.ACK_TIMEOUT:
-            print("error_fingerprint_sensor: Failed: Time out !")
             return self.ACK_TIMEOUT
         elif response[4] == self.ACK_NO_USER:
-            print("error_fingerprint_sensor: Failed: There is no matched fingerprint.")
             return self.ACK_NO_USER
         else:
-            print("error_fingerprint_sensor: Failed！")
             return self.ACK_FAIL
         
     # Translates request number to request execution and response
@@ -226,10 +213,22 @@ class FingerprintSensor:
             rc = self.add_fingerprint()
             if rc == self.ACK_SUCCESS:
                 print ("added")
+                return 0
             elif rc == self.ACK_FAIL:
                 print ("error_fingerprint_sensor: Failed: Please try to place the center of the fingerprint flat to sensor, or this fingerprint already exists !")
+                return 1
             elif rc == self.ACK_FULL:
-                print ("error_fingerprint_sensor: Failed: The fingerprint library is full !") 
+                print ("error_fingerprint_sensor: Failed: The fingerprint library is full !")
+                return 1 
+            elif rc == self.ACK_TIMEOUT:
+                print("error_fingerprint_sensor: Failed： Timeout！")
+                return 1
+            elif rc == self.ACK_FINGER_OCCUPIED:
+                print ("error_fingerprint_sensor: The fingerprint already exists, please change a finger and test again!")
+                return 1
+            elif rc == self.ACK_USR_OCCUPIED:
+                print ("error_fingerprint_sensor: The User already exists, please change the id and test again!")
+                return 1
         elif request == self.CMD_MATCH:
             # print ("Verifying fingerprint... place finger on fingerprint sensor")
             rc = self.verify_user()
@@ -245,6 +244,9 @@ class FingerprintSensor:
             elif rc == self.ACK_GO_OUT:
                 print ("error_fingerprint_sensor: Failed: Please try to place the center of the fingerprint flat to sensor !")
                 return 1
+            elif rc == self.ACK_FAIL:
+                print("error_fingerprint_sensor: Failed！")
+                return 1
         elif request == self.CMD_USER_CNT:
             count = self.get_user_count()
             print ("Number of users recorded is: %d" % count)
@@ -252,9 +254,12 @@ class FingerprintSensor:
             rc = self.delete_all_users()
             if rc == self.ACK_SUCCESS:
                 print ("All users deleted successfully!")
+                return 0
             elif rc == self.ACK_TIMEOUT:
                 print ("error_fingerprint_sensor: Failed: Time out!")
+                return 1
             elif rc == self.ACK_FAIL:
                 print ("error_fingerprint_sensor: Failed to delete all users!")
+                return 1
 
 
