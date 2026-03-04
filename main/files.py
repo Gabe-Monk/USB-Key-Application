@@ -3,16 +3,27 @@ import subprocess
 import base64
 import shutil
 import communication
+import csv
 from Crypto.PublicKey import RSA
 
 # Configuration constants for the hardcoded paths expected by the C encryption/decryption binaries
 ENC_BIN = "/app/build/bin/rsa_aes_enc"
 DEC_BIN = "/app/build/bin/rsa_aes_dec"
 C_INPUT_FILE = "input.pdf"
-C_OUTPUT_FILE = "output.bin"
-C_PUB_KEY = "usb_pub.pem"
+C_ENC_OUTPUT_FILE = "output.bin"
 C_PRIV_KEY = "usb_priv.pem"
 C_DEC_OUT = "input_decrypted.pdf"
+CSV_FILE = "/app/crypto/keys.csv"
+
+def get_pub_key(target_sn):
+    with open(CSV_FILE, newline="") as f:
+        reader = csv.DictReader(f)
+
+        for row in reader:
+            if int(row["Serial Number"]) == target_sn:
+                return row["Public RSA Key"]
+
+    return None
 
 def simple_encrypt_file(target_file, target_sn):
     """
@@ -32,26 +43,28 @@ def simple_encrypt_file(target_file, target_sn):
         # 1. Setup workspace: Copy the target file to 'input.pdf' (the name the C binary expects)
         if target_abs != os.path.abspath(C_INPUT_FILE):
             shutil.copy(target_abs, C_INPUT_FILE)
-            
-        # Copy the local public key into the workspace so the binary can find it
-        # TODO: This will need to be changed to some table, fetched by serial number
-        shutil.copy("/app/setup/public_key.pem", C_PUB_KEY)
 
-        # 2. Execute the C encryption binary
-        subprocess.run([ENC_BIN], check=True)
+        # 2. Get public key to pass to encryption program (still base64 encoded)
+        pubkey = get_pub_key(target_sn)
+        if pubkey == None:
+            print(f"Failed to find public key for device with serial number {target_sn} in {CSV_FILE}")
+            return
+
+        # 3. Execute the C encryption binary
+        subprocess.run([ENC_BIN, pubkey], check=True)
         
-        if os.path.exists(C_OUTPUT_FILE):
-            # 3: Append the target device's serial number (assuming fixed, 32-bit length)
+        if os.path.exists(C_ENC_OUTPUT_FILE):
+            # 4: Append the target device's serial number (assuming fixed, 32-bit length)
             #    to end of encrypted file
 
             # Read encrypted data
-            with open(C_OUTPUT_FILE, "rb") as f:
+            with open(C_ENC_OUTPUT_FILE, "rb") as f:
                 encrypted_data = f.read()
             
             # Append unsigned, 32-bit serial number to end of encrypted data in big-endian manner
             encrypted_data += target_sn.to_bytes(4, byteorder="big", signed=False)
 
-            # 4. Handle output: Move the resulting encrypted_data into the .ukey file
+            # 5. Handle output: Move the resulting encrypted_data into the .ukey file
             if os.path.exists(output_ukey):
                 os.remove(output_ukey) # Overwrite if it already exists
                 
@@ -63,8 +76,8 @@ def simple_encrypt_file(target_file, target_sn):
     except Exception as e:
         print(f"Encryption failed: {e}")
     finally:
-        # 4. Clean up temporary workspace files to avoid clutter
-        for tmp in [C_INPUT_FILE, C_PUB_KEY]:
+        # 6. Clean up temporary workspace files to avoid clutter
+        for tmp in [C_INPUT_FILE, C_ENC_OUTPUT_FILE]:
             if os.path.exists(tmp) and os.path.abspath(tmp) != target_abs:
                 os.remove(tmp)
 
@@ -119,11 +132,11 @@ def simple_decrypt_file(target_ukey, device_sn):
             f.write(RSA.import_key(der_bytes).export_key(format='PEM'))
 
         # 3. Setup workspace: The decryption binary expects 'output.bin' as its input file
-        if os.path.exists(C_OUTPUT_FILE):
-            os.remove(C_OUTPUT_FILE)
+        if os.path.exists(C_ENC_OUTPUT_FILE):
+            os.remove(C_ENC_OUTPUT_FILE)
         
         # Write stripped encrypted data (without sn) for C binary
-        with open(C_OUTPUT_FILE, "wb") as f:
+        with open(C_ENC_OUTPUT_FILE, "wb") as f:
             f.write(encrypted_data)
 
         # 4. Execute Decryption binary
@@ -149,6 +162,6 @@ def simple_decrypt_file(target_ukey, device_sn):
         return None
     finally:
         # 6. Cleanup sensitive temporary files (Crucial to ensure the private key isn't left on the PC)
-        for tmp in [C_OUTPUT_FILE, C_PRIV_KEY]:
+        for tmp in [C_ENC_OUTPUT_FILE, C_PRIV_KEY]:
             if os.path.exists(tmp):
                 os.remove(tmp)

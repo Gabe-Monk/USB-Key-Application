@@ -13,11 +13,11 @@ A wiring diagram for this project is available in `Schematic.pdf`.
 1. Disconnect the USB key
 
 ### Generate RSA Key Pair and Push Private Key to USB Key
-1. First generate the key by running `setup/generate_keys.py`
-1. Once you have your key, go and paste it in the `KEY_BODY` variable, make sure it is all one line
-1. Connect your USB and run `setup/write_key.py` in Thonny
+1. First generate the keys by running `setup/generate_keys.py`
+1. Copy/paste the public key into an entry of `crypto/keys.csv`, with the appropriate owner & serial number values for you and your device
+1. Copy/paste the private key into the `KEY_BODY` variable in `setup/write_key.py` (make sure it is all one line)
+1. Connect your USB key device and run `setup/write_key.py` (in Thonny)
 1. Your private key is now saved to the usb key
-1. *TODO:* Write what to do with the public key here
 
 ## How to Run It (User)
 

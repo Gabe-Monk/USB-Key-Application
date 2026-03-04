@@ -6,6 +6,7 @@
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>
+#include <openssl/bio.h>
 
 #include "aesGcm.h"
 
@@ -56,6 +57,10 @@ unsigned char *rsa_encrypt(EVP_PKEY *rsa_pub_key, unsigned char *aes_key, size_t
 }
 
 int main(int argc, char** argv){
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <base64-encoded public RSA key>\n", argv[0]);
+        return 1;
+    }
 
     // Generate symmetric key for AES algorithm
     unsigned char aes_key[16];
@@ -64,33 +69,40 @@ int main(int argc, char** argv){
         return 1;
     }
 
-    hexdump("\nRandomly Generated AES key: ",aes_key, sizeof(aes_key));
+    // hexdump("\nRandomly Generated AES key: ",aes_key, sizeof(aes_key));
 
-    // Public key extracted from USB should be in PEM format, read below for more info
-    EVP_PKEY *rsa_pub_key = NULL;
-    FILE *fp = fopen("usb_pub.pem", "rb");
-    if(!fp){
-        printf("Error: Could not read file\n");
+    // Get public key argument (still encoded in base64)
+    char *rsaPubkeyBase64Encoded = argv[1];
+    EVP_PKEY *rsaPubKey = NULL;
+
+    // Decode public RSA key from Base64 to DER
+    BIO *b64 = BIO_new(BIO_f_base64());
+    BIO *mem = BIO_new_mem_buf(rsaPubkeyBase64Encoded, -1);
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL); // CSV key has no line breaks
+    mem = BIO_push(b64, mem);
+
+    unsigned char der[4096];
+    int der_len = BIO_read(mem, der, sizeof(der));
+    BIO_free_all(mem);
+
+    if (der_len <= 0) {
+        fprintf(stderr, "Error: Base64 decode of public RSA key failed\n");
         return 1;
     }
 
-    /*These functions read and write PEM-encoded objects, using the PEM type name, 
-    any additional header information, and the raw data of length len. PEM is the 
-    term used for binary content encoding first defined in IETF RFC 1421. The content 
-    is a series of base64-encoded lines, surrounded by begin/end markers each on their 
-    own line. For example:*/
-    rsa_pub_key = PEM_read_PUBKEY(fp, NULL, NULL, NULL);
-    fclose(fp);
-    if(!rsa_pub_key){
-        printf("Error: rsa_pub_key is NULL\n");
+    // Convert pubkey from DER to EVP_PKEY
+    const unsigned char *p = der;
+    rsaPubKey = d2i_PUBKEY(NULL, &p, der_len);
+
+    if (!rsaPubKey) {
+        printf("Error: rsaPubKey is NULL\n");
         return 1;
     }
-    PEM_write_PUBKEY(stdout, rsa_pub_key);
-    fflush(stdout);
 
+    // Encrypt pub key
     unsigned char *encrypted_key;
     size_t enc_key_len = 0;
-    encrypted_key = rsa_encrypt(rsa_pub_key, aes_key, sizeof(aes_key), &enc_key_len);
+    encrypted_key = rsa_encrypt(rsaPubKey, aes_key, sizeof(aes_key), &enc_key_len);
     if(!encrypted_key){
         printf("Error: encrypted_key is NULL\n");
         return 1;
@@ -142,7 +154,7 @@ int main(int argc, char** argv){
 
     fclose(infile);
     fclose(output);
-    EVP_PKEY_free(rsa_pub_key);
+    EVP_PKEY_free(rsaPubKey);
     OPENSSL_free(encrypted_key);
 }
 
