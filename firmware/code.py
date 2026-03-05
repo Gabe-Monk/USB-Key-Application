@@ -2,6 +2,7 @@ import board
 import sys
 import digitalio
 import os
+import time
 from eeprom import EepromDevice
 from UART_fingerprint import FingerprintSensor
 import errors
@@ -10,8 +11,8 @@ FIRMWARE = os.getenv("FIRMWARE")
 SERIAL_NUM = os.getenv("SERIAL_NUM")
 
 # Green LED (on Pico)
-led = digitalio.DigitalInOut(board.LED)
-led.direction = digitalio.Direction.OUTPUT
+greenLed = digitalio.DigitalInOut(board.LED)
+greenLed.direction = digitalio.Direction.OUTPUT
 
 eeprom = EepromDevice(scl_pin=board.GP5, sda_pin=board.GP4)
 fingerprint = FingerprintSensor(uart_tx=board.GP0, uart_rx=board.GP1, rst_pin=board.GP22, wake_pin=board.GP21)
@@ -61,6 +62,14 @@ while True:
         fingerprint.decode_request(0x01)
     elif line == 'pc_authenticate_fingerprint':
         authenticated = (fingerprint.decode_request(0x0C) == 0)
+
+        if authenticated:
+            # Flash the green LED 5 times on success
+            for _ in range(5):
+                greenLed.value = True
+                time.sleep(0.1)
+                greenLed.value = False
+                time.sleep(0.07)
     elif line == 'pc_get_auth':
         print(authenticated)
     else:
