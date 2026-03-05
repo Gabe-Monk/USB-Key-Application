@@ -59,10 +59,34 @@ switch (msg.getCmd()) {
                 data["fingerprint_enrolled"] = false; // TODO:
                 break;
             }
-            case UC_ENROLL_FINGERPRINT: // TODO:
+            case UC_ENROLL_FINGERPRINT: { // TODO: NEEDS TESTING
+                std::string resp;
+                // passing resp to capture response for pc_enroll_fingerprint command
+                // NOTE: command is currently very verbose, need to reduce output on Key end
+                deviceErr err = addFingerprint(resp, port);
+                if (err == OK) {
+                    response["ok"] = true;
+                }
+                else {
+                    response["ok"] = false;
+                    data["error"] = deviceErrToStr(err);
+                }
                 break; 
-            case UC_AUTH_FINGERPRINT: // TODO:
+            }
+            case UC_AUTH_FINGERPRINT: { // TODO: NEEDS TESTING
+                std::string resp;
+                // passing resp to capture response for pc_authenticate_fingerprint command
+                // NOTE: command is currently very verbose, need to reduce output on Key end
+                deviceErr err = authFingerprint(resp, port);
+                if (err == OK) {
+                    response["ok"] = true;
+                }
+                else {
+                    response["ok"] = false;
+                    data["error"] = deviceErrToStr(err);
+                }
                 break;
+            }
             case UC_GET_PRIVATE_KEY: {
                 // TODO: Make sure fingerprint confirmed before sending this
                 
@@ -349,7 +373,7 @@ deviceErr readFromKey(std::string &msg, struct sp_port *port) {
     // But since sp_blocking_read waits, we rely on its internal timeout.
     while (bytes_read < sizeof(buf) - 1) {
         char c;
-        int spRet = sp_blocking_read(port, &c, 1, 3000);  // read 1 byte at a time
+        int spRet = sp_blocking_read(port, &c, 1, 5200);  // read 1 byte at a time
         if (spRet <= 0) {
             // timeout or error
             break;
@@ -387,6 +411,12 @@ deviceErr readFromKey(std::string &msg, struct sp_port *port) {
         } else if (msg.compare(0, initErrorPrefix.size(), initErrorPrefix) == 0) {
             ret = ERROR_INIT;
             LOG_ERR(ret, "Microcontroller failed initiation: %s", msg.c_str());
+        } else if (msg.compare(0, fingerprintErrorPrefix.size(), fingerprintErrorPrefix) == 0) {
+            ret = ERROR_FINGERPRINT;
+            LOG_ERR(ret, "Fingerprint sensor error: %s", msg.c_str());
+        } else if (msg == "error_auth_req") {
+            ret = ERROR_AUTH_REQ;
+            LOG_ERR(ret, "Operation blocked as it requires fingerprint authentication");
         }
     } else {
         ret = ERROR_GENERIC;
@@ -405,8 +435,6 @@ deviceErr readFromKey(std::string &msg, struct sp_port *port) {
  */
 deviceErr performHandshake(struct sp_port *port) {
     deviceErr ret = OK;
-    // Flush any old data from the buffer
-    sp_flush(port, SP_BUF_BOTH);
 
     CHK(sendToKey(DC_HANDSHAKE_HELLO, port));
     std::string reply;
@@ -456,5 +484,23 @@ deviceErr getPrivateKey(std::string &key, struct sp_port *port) {
     CHK(sendToKey(DC_GET_PRIVATE_KEY, port));
     // Increase read timeout logic implicitly by allowing readFromKey to handle it
     CHK(readFromKey(key, port));
+    return OK;
+}
+
+deviceErr addFingerprint(std::string &resp, struct sp_port *port) {
+    CHK(sendToKey(DC_ENROLL_FINGERPRINT, port));
+    CHK(readFromKey(resp, port));
+    if (resp != "added") {
+        return ERROR_FINGERPRINT;
+    }
+    return OK;
+}
+
+deviceErr authFingerprint(std::string &resp, struct sp_port *port) {
+    CHK(sendToKey(DC_AUTH_FINGERPRINT, port));
+    CHK(readFromKey(resp, port));
+    if (resp != "matched") {
+        return ERROR_FINGERPRINT;
+    }
     return OK;
 }

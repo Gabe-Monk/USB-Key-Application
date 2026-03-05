@@ -12,6 +12,7 @@ communication.start_watchdog()
 # TODO: HANDSHAKE
 # ---------------------------------------------------------
 
+
 # ---------------------------------------------------------
 # MENU LOOP
 # ---------------------------------------------------------
@@ -53,7 +54,7 @@ while True:
             data = resp.get("data", {})
             print(f"Fingerprint rejected. Error: {data.get('error')}") # TODO: Make sure this error thing actually does anything
         else:
-            print("REJECTED.")
+            print("FINGERPRINT REJECTED.")
 
     elif choice == "4":
         fname = input("Enter filename to encrypt: ")

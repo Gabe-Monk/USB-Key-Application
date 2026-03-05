@@ -10,8 +10,9 @@ import os
 # print("Setting up connection...")
 context = zmq.Context()
 socket = context.socket(zmq.REQ)
-# Increase timeout to 5 seconds to match the C++ simulator
-socket.setsockopt(zmq.RCVTIMEO, 5000) 
+# Increase timeout to 5.1 seconds to be greater than 5 second timeout 
+# on fingerprint sensor
+socket.setsockopt(zmq.RCVTIMEO, 5100) 
 
 # print("Connecting to hardware interface on port 5555...")
 socket.connect("tcp://localhost:5555")
@@ -42,7 +43,7 @@ def send_command(cmd, data=None):
     }
     
     json_str = json.dumps(msg)
-    
+
     with socket_lock:
         try:
             # 1. Try to send
@@ -52,6 +53,20 @@ def send_command(cmd, data=None):
             reply_str = socket.recv_string()
             return json.loads(reply_str)
 
+        except Exception as e:
+            # 3. IF ANYTHING GOES WRONG (Timeout, Error, etc.)
+            print(f"\n[!] Error: {e}")
+            print("[-] Resetting the connection (Hanging up and redialing)...")
+            
+            # Close the broken socket
+            socket.close(linger=0)
+            
+            # Create a brand new one
+            socket = context.socket(zmq.REQ)
+            socket.setsockopt(zmq.RCVTIMEO, 5000) # Remember the 5s timeout!
+            socket.connect("tcp://localhost:5555")
+            
+            return None
         except Exception as e:
             # 3. IF ANYTHING GOES WRONG (Timeout, Error, etc.)
             print(f"\n[!] Error: {e}")
