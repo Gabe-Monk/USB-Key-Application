@@ -33,7 +33,7 @@ while True:
             data = resp.get("data", {})
             print(f"Device Serial: {data.get('serial')}")
             print(f"Device Firmware: {data.get('firmware')}")
-            print(f"Enrolled: {data.get('fingerprint_enrolled')}")
+            print(f"Authenticated: {data.get('authenticated')}")
         else:
             print("Device not responding.")
 

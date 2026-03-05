@@ -14,7 +14,8 @@ typedef enum {
     DC_GET_FIRMWARE_VERSION,
     DC_GET_PRIVATE_KEY,
     DC_ENROLL_FINGERPRINT,
-    DC_AUTH_FINGERPRINT
+    DC_AUTH_FINGERPRINT,
+    DC_GET_AUTH
 } deviceCmd;
 
 /**
@@ -27,7 +28,8 @@ const std::map<deviceCmd, std::string> deviceCmdMap = {
     {DC_GET_FIRMWARE_VERSION, "pc_req_fw\n"},
     {DC_GET_PRIVATE_KEY, "pc_req_key\n"},
     {DC_ENROLL_FINGERPRINT, "pc_enroll_fingerprint\n"},
-    {DC_AUTH_FINGERPRINT, "pc_authenticate_fingerprint\n"}
+    {DC_AUTH_FINGERPRINT, "pc_authenticate_fingerprint\n"},
+    {DC_GET_AUTH, "pc_get_auth\n"}
 };
 
 /**
@@ -54,5 +56,6 @@ deviceErr getFirmware(std::string &fw, struct sp_port *port);
 deviceErr getPrivateKey(std::string &key, struct sp_port *port);
 deviceErr addFingerprint(std::string &resp, struct sp_port *port);
 deviceErr authFingerprint(std::string &resp, struct sp_port *port);
+deviceErr getAuthStatus(bool &status, struct sp_port *port);
 
 #endif

@@ -56,7 +56,9 @@ switch (msg.getCmd()) {
                 data["serial"] = reply;
                 CHK(getFirmware(reply, port));
                 data["firmware"] = reply;
-                data["fingerprint_enrolled"] = false; // TODO:
+                bool authenticated;
+                CHK(getAuthStatus(authenticated, port));
+                data["authenticated"] = authenticated;
                 break;
             }
             case UC_ENROLL_FINGERPRINT: { // TODO: NEEDS TESTING
@@ -479,7 +481,9 @@ deviceErr getFirmware(std::string &fw, struct sp_port *port) {
     return OK;
 }
 
-/*********************************************************************************************************************/
+/*********************************************************************************************************************
+ * TODO: Please comment
+ */
 deviceErr getPrivateKey(std::string &key, struct sp_port *port) {
     CHK(sendToKey(DC_GET_PRIVATE_KEY, port));
     // Increase read timeout logic implicitly by allowing readFromKey to handle it
@@ -487,6 +491,9 @@ deviceErr getPrivateKey(std::string &key, struct sp_port *port) {
     return OK;
 }
 
+/*********************************************************************************************************************
+ * TODO: Please comment
+ */
 deviceErr addFingerprint(std::string &resp, struct sp_port *port) {
     CHK(sendToKey(DC_ENROLL_FINGERPRINT, port));
     CHK(readFromKey(resp, port));
@@ -496,11 +503,30 @@ deviceErr addFingerprint(std::string &resp, struct sp_port *port) {
     return OK;
 }
 
+/*********************************************************************************************************************
+ * TODO: Please comment
+ */
 deviceErr authFingerprint(std::string &resp, struct sp_port *port) {
     CHK(sendToKey(DC_AUTH_FINGERPRINT, port));
     CHK(readFromKey(resp, port));
     if (resp != "matched") {
         return ERROR_FINGERPRINT;
     }
+    return OK;
+}
+
+/*********************************************************************************************************************
+ * @brief Checks whether user has been authenticated via fingerprint scanner by querying USB key
+ * 
+ * @param status Status gets read into this variable as either "True"/"False"
+ * @param port Port that we're using to communicate with the USB key
+ * 
+ * @returns `OK` if successful
+ */
+deviceErr getAuthStatus(bool &status, struct sp_port *port) {
+    CHK(sendToKey(DC_GET_AUTH, port));
+    std::string rep;
+    CHK(readFromKey(rep, port));
+    status = (rep == "True" ? true : false);
     return OK;
 }

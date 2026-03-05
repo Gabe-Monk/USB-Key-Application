@@ -60,7 +60,8 @@ while True:
         fingerprint.decode_request(0x01)
     elif line == 'pc_authenticate_fingerprint':
         authenticated = (fingerprint.decode_request(0x0C) == 0)
-
+    elif line == 'pc_get_auth':
+        print(authenticated)
     else:
         print("error_unrecognized: unrecognized value received ('" + line + "')")
 
