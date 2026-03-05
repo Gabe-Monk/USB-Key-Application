@@ -6,6 +6,8 @@
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>
+#include <openssl/bio.h>
+#include <openssl/err.h>
 
 #include "aesGcm.h"
 
@@ -59,8 +61,12 @@ unsigned char *rsa_decrypt(EVP_PKEY *rsa_priv_key, unsigned char *aes_key, size_
 
 
 int main(int argc, char** argv){
+    if (argc != 4) {
+        fprintf(stderr, "Usage: %s <path to file to decrypt> <path to output file> <base64-encoded private RSA key>\n", argv[0]);
+        return 1;
+    }
 
-    FILE *encrypted_load = fopen("output.bin", "rb");
+    FILE *encrypted_load = fopen(argv[1], "rb");
     if (encrypted_load == NULL){
         printf("Error\n");
     }
@@ -88,57 +94,72 @@ int main(int argc, char** argv){
     fread(&tag, 1, 16, encrypted_load);
     fclose(encrypted_load);
 
-    EVP_PKEY *rsa_priv_key = NULL;
-    FILE *fp = fopen("usb_priv.pem", "rb");
-    if(!fp){
-        printf("Error: Could not read file\n");
+    // Get public key argument (still encoded in base64)
+    char *rsaPrivKeyBase64Encoded = argv[3];
+    EVP_PKEY *rsaPrivKey = NULL;
+
+    // Decode private RSA key from Base64 to DER
+    BIO *b64 = BIO_new(BIO_f_base64());
+    BIO *mem = BIO_new_mem_buf(rsaPrivKeyBase64Encoded, -1);
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL); // CSV key has no line breaks
+    mem = BIO_push(b64, mem);
+
+    unsigned char der[4096];
+    int der_len = BIO_read(mem, der, sizeof(der));
+    BIO_free_all(mem);
+
+    if (der_len <= 0) {
+        fprintf(stderr, "Error: Base64 decode of private RSA key failed\n");
         return 1;
     }
 
-    rsa_priv_key = PEM_read_PrivateKey(fp, NULL, NULL, NULL);
-    fclose(fp);
-    if(!rsa_priv_key){
-        printf("Error: rsa_priv_key is NULL\n");
-        OPENSSL_free(encrypted_key);
+    // Convert pubkey from DER to EVP_PKEY
+    const unsigned char *p = der;
+    rsaPrivKey = d2i_AutoPrivateKey(NULL, &p, der_len);
+
+    if (!rsaPrivKey) {
+        printf("Error: rsaPrivKey is NULL\n");
+        ERR_print_errors_fp(stderr);
         return 1;
     }
-    PEM_write_PrivateKey(stdout, rsa_priv_key, NULL, NULL, 0, NULL, NULL);
-    fflush(stdout);
+    // PEM_write_PrivateKey(stdout, rsa_priv_key, NULL, NULL, 0, NULL, NULL);
+    // fflush(stdout);
     unsigned char *decrypted_key;
     size_t dec_key_len = 0;
-    decrypted_key = rsa_decrypt(rsa_priv_key, encrypted_key, enc_key_len, &dec_key_len);
+    decrypted_key = rsa_decrypt(rsaPrivKey, encrypted_key, enc_key_len, &dec_key_len);
 
     if(!decrypted_key){
         printf("Error: decrypted_key is NULL\n");
-        EVP_PKEY_free(rsa_priv_key);
+        EVP_PKEY_free(rsaPrivKey);
         OPENSSL_free(encrypted_key);
         return 1;
     }
 
-    printf("Decrypted Key: ");
-    for (size_t i = 0; i < dec_key_len; i++){
-        printf("%02x", decrypted_key[i]);
-    }
-    printf("\n");
+    // printf("Decrypted Key: ");
+    // for (size_t i = 0; i < dec_key_len; i++){
+    //     printf("%02x", decrypted_key[i]);
+    // }
+    // printf("\n");
 
     
-    // Write unsigned char encrypted_file to a file as aesGcm function takes a file pointer
-    FILE *outfile_encrypted = fopen("output.enc", "wb");
-    if(!outfile_encrypted) {
+    // Write temporary encrypted file that doesn't contain any keys, just original encrypted file
+    FILE *infile_tmp = fopen("output.enc", "wb");
+    if(!infile_tmp) {
         perror("File open failed");
-        EVP_PKEY_free(rsa_priv_key);
+        EVP_PKEY_free(rsaPrivKey);
         OPENSSL_free(encrypted_key);
         OPENSSL_free(decrypted_key);
         return 1;
     }
-    fwrite(encrypted_file, 1, enc_file_len, outfile_encrypted);
-    fclose(outfile_encrypted);
+    fwrite(encrypted_file, 1, enc_file_len, infile_tmp);
+    fclose(infile_tmp);
+    infile_tmp = NULL;
 
-    // Now read it into infile_encrypted to pass to aes function
-    FILE *infile_encrypted = fopen("output.enc", "rb");
-    if(!infile_encrypted) {
+    // Reopen file to pass to AES function
+    infile_tmp = fopen("output.enc", "rb");
+    if(!infile_tmp) {
         perror("File open failed");
-        EVP_PKEY_free(rsa_priv_key);
+        EVP_PKEY_free(rsaPrivKey);
         OPENSSL_free(encrypted_key);
         OPENSSL_free(decrypted_key);
         return 1;
@@ -146,23 +167,25 @@ int main(int argc, char** argv){
 
 
     // Create a file to store decrypted file
-    FILE *outfile_decrypted= fopen("input_decrypted.pdf", "wb");
-    if(!outfile_decrypted) {
+    FILE *outfile= fopen(argv[2], "wb");
+    if(!outfile) {
         perror("File open failed");
-        fclose(infile_encrypted);
-        EVP_PKEY_free(rsa_priv_key);
+        fclose(infile_tmp);
+        remove("output.enc");
+        EVP_PKEY_free(rsaPrivKey);
         OPENSSL_free(encrypted_key);
         OPENSSL_free(decrypted_key);
         return 1;
     }
 
-    if (1 != aesGcm(infile_encrypted, outfile_decrypted, 0, decrypted_key, iv, tag)){
+    if (1 != aesGcm(infile_tmp, outfile, 0, decrypted_key, iv, tag)){
         printf("An error occurred\n");
     }
 
-    fclose(infile_encrypted);
-    fclose(outfile_decrypted);
-    EVP_PKEY_free(rsa_priv_key);
+    fclose(infile_tmp);
+    fclose(outfile);
+    remove("output.enc");
+    EVP_PKEY_free(rsaPrivKey);
     OPENSSL_free(encrypted_key);
     OPENSSL_free(decrypted_key);
     OPENSSL_free(encrypted_file);

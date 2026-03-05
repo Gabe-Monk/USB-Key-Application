@@ -59,7 +59,7 @@ while True:
     elif choice == "4":
         fname = input("Enter filename to encrypt: ")
         target_sn = int(input("Enter serial number of target decryptor device:"))
-        files.simple_encrypt_file(fname, target_sn)
+        files.encrypt_file(fname, target_sn)
 
     elif choice == "5":
         fname = input("Enter .ukey filename to decrypt: ")
@@ -78,7 +78,7 @@ while True:
         if True:#resp and resp["data"]["accepted"]:
             print("Auth OK.")
             
-            secret_file = files.simple_decrypt_file(fname, device_sn)
+            secret_file = files.decrypt_file(fname, device_sn)
             
             # Only proceed if a file was actually created
             if secret_file:

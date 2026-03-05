@@ -57,8 +57,8 @@ unsigned char *rsa_encrypt(EVP_PKEY *rsa_pub_key, unsigned char *aes_key, size_t
 }
 
 int main(int argc, char** argv){
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s <base64-encoded public RSA key>\n", argv[0]);
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s <path to file to encyrpt> <base64-encoded public RSA key>\n", argv[0]);
         return 1;
     }
 
@@ -72,7 +72,7 @@ int main(int argc, char** argv){
     // hexdump("\nRandomly Generated AES key: ",aes_key, sizeof(aes_key));
 
     // Get public key argument (still encoded in base64)
-    char *rsaPubkeyBase64Encoded = argv[1];
+    char *rsaPubkeyBase64Encoded = argv[2];
     EVP_PKEY *rsaPubKey = NULL;
 
     // Decode public RSA key from Base64 to DER
@@ -108,11 +108,11 @@ int main(int argc, char** argv){
         return 1;
     }
 
-    printf("Encrypted Key: ");
-    for (size_t i = 0; i < enc_key_len; i++){
-        printf("%02x", encrypted_key[i]);
-    }
-    printf("\n");
+    // printf("Encrypted Key: ");
+    // for (size_t i = 0; i < enc_key_len; i++){
+    //     printf("%02x", encrypted_key[i]);
+    // }
+    // printf("\n");
 
     // Generate random IV (nonce) value for AES-GCM
     unsigned char iv[12];
@@ -123,14 +123,20 @@ int main(int argc, char** argv){
 
     unsigned char tag[16];
 
-    FILE *infile = fopen("input.pdf", "rb");
+    FILE *infile = fopen(argv[1], "rb");
     if(!infile) {
         perror("File open failed");
         return 1;
     }
+    
     // Send encrypted key and file together
     FILE *output;
-    if ((output = fopen("output.bin", "wb")) == NULL){
+    char outputFileName[1024];
+
+    snprintf(outputFileName, sizeof(outputFileName), "%s.ukey", argv[1]);
+
+    output = fopen(outputFileName, "wb");
+    if (output == NULL) {
         printf("Error: output pointer is NULL\n");
         return 1;
     }
