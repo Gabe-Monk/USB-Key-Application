@@ -1,6 +1,7 @@
 import busio
 import time
 from adafruit_bus_device.i2c_device import I2CDevice
+import errors
 
 class EepromDevice:
     """ For AT24CS04-SSHM-T EEPROM chip """
@@ -19,7 +20,7 @@ class EepromDevice:
             attempts += 1
         
         if attempts >= max_attempts:
-            print('error_init: Failed to init EEPROM device - I2C bus not available')
+            errors.reportError('error_init: Failed to init EEPROM device - I2C bus not available')
             return
 
         self.i2c_bus.unlock()

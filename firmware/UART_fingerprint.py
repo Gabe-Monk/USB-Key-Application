@@ -2,6 +2,7 @@ import board
 import busio
 import digitalio
 import time
+import errors
 
 class FingerprintSensor:
 
@@ -125,7 +126,8 @@ class FingerprintSensor:
             finger_account = response[2] + response[3]
             return finger_account
         else:
-            print("error_fingerprint_sensor: Failed to query the account!")
+            # TODO: Move this to same place as rest of errors in decode function
+            errors.reportError("error_fingerprint_sensor: Failed to query the account!")
             return self.ACK_FAIL
         
     def delete_all_users(self):
@@ -212,54 +214,54 @@ class FingerprintSensor:
             # print ("Add fingerprint  (Put your finger on sensor until successfully/failed information returned) ")
             rc = self.add_fingerprint()
             if rc == self.ACK_SUCCESS:
-                print ("added")
+                print("added")
                 return 0
             elif rc == self.ACK_FAIL:
-                print ("error_fingerprint_sensor: Failed: Please try to place the center of the fingerprint flat to sensor, or this fingerprint already exists !")
+                errors.reportError("error_fingerprint_sensor: Failed: Please try to place the center of the fingerprint flat to sensor, or this fingerprint already exists !")
                 return 1
             elif rc == self.ACK_FULL:
-                print ("error_fingerprint_sensor: Failed: The fingerprint library is full !")
+                errors.reportError("error_fingerprint_sensor: Failed: The fingerprint library is full !")
                 return 1 
             elif rc == self.ACK_TIMEOUT:
-                print("error_fingerprint_sensor: Failed： Timeout！")
+                errors.reportError("error_fingerprint_sensor: Failed： Timeout！")
                 return 1
             elif rc == self.ACK_FINGER_OCCUPIED:
-                print ("error_fingerprint_sensor: The fingerprint already exists, please change a finger and test again!")
+                errors.reportError("error_fingerprint_sensor: The fingerprint already exists, please change a finger and test again!")
                 return 1
             elif rc == self.ACK_USR_OCCUPIED:
-                print ("error_fingerprint_sensor: The User already exists, please change the id and test again!")
+                errors.reportError("error_fingerprint_sensor: The User already exists, please change the id and test again!")
                 return 1
         elif request == self.CMD_MATCH:
             # print ("Verifying fingerprint... place finger on fingerprint sensor")
             rc = self.verify_user()
             if rc == self.ACK_SUCCESS:
-                print ("matched")
+                print("matched")
                 return 0
             elif rc == self.ACK_NO_USER:
-                print ("error_fingerprint_sensor: Failed: This fingerprint was not found in the library !")
+                errors.reportError("error_fingerprint_sensor: Failed: This fingerprint was not found in the library !")
                 return 1
             elif rc == self.ACK_TIMEOUT:
-                print ("error_fingerprint_sensor: Failed: Time out !")
+                errors.reportError("error_fingerprint_sensor: Failed: Time out !")
                 return 1
             elif rc == self.ACK_GO_OUT:
-                print ("error_fingerprint_sensor: Failed: Please try to place the center of the fingerprint flat to sensor !")
+                errors.reportError("error_fingerprint_sensor: Failed: Please try to place the center of the fingerprint flat to sensor !")
                 return 1
             elif rc == self.ACK_FAIL:
-                print("error_fingerprint_sensor: Failed！")
+                errors.reportError("error_fingerprint_sensor: Failed！")
                 return 1
         elif request == self.CMD_USER_CNT:
             count = self.get_user_count()
-            print ("Number of users recorded is: %d" % count)
+            print("Number of users recorded is: %d" % count)
         elif request == self.CMD_DEL_ALL:
             rc = self.delete_all_users()
             if rc == self.ACK_SUCCESS:
-                print ("All users deleted successfully!")
+                print("All users deleted successfully!")
                 return 0
             elif rc == self.ACK_TIMEOUT:
-                print ("error_fingerprint_sensor: Failed: Time out!")
+                errors.reportError("error_fingerprint_sensor: Failed: Time out!")
                 return 1
             elif rc == self.ACK_FAIL:
-                print ("error_fingerprint_sensor: Failed to delete all users!")
+                errors.reportError("error_fingerprint_sensor: Failed to delete all users!")
                 return 1
 
 

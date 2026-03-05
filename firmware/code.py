@@ -1,14 +1,15 @@
 import board
 import sys
 import digitalio
-import binascii
-from eeprom import EepromDevice
 import os
+from eeprom import EepromDevice
 from UART_fingerprint import FingerprintSensor
+import errors
 
 FIRMWARE = os.getenv("FIRMWARE")
 SERIAL_NUM = os.getenv("SERIAL_NUM")
 
+# Green LED (on Pico)
 led = digitalio.DigitalInOut(board.LED)
 led.direction = digitalio.Direction.OUTPUT
 
@@ -32,7 +33,7 @@ while True:
         print(FIRMWARE)
     elif line == 'pc_req_key':
         if not authenticated:
-            print('error_auth_req')
+            errors.reportError('error_auth_req')
             continue
 
         # Read length (first 2 bytes)
@@ -50,7 +51,7 @@ while True:
                 # Send key to PC
                 print(raw_bytes.decode('utf-8'))
             else:
-                print("error_invalid_length")
+                errors.reportError("error_invalid_length")
         except:
             print("error_eeprom_read")
     elif line == 'pc_enroll_fingerprint':
@@ -63,6 +64,4 @@ while True:
     elif line == 'pc_get_auth':
         print(authenticated)
     else:
-        print("error_unrecognized: unrecognized value received ('" + line + "')")
-
-    led.value = not led.value
+        errors.reportError("error_unrecognized: unrecognized value received ('" + line + "')")
