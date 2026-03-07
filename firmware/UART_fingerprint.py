@@ -217,13 +217,13 @@ class FingerprintSensor:
                 print("added")
                 return 0
             elif rc == self.ACK_FAIL:
-                errors.reportError("error_fingerprint_sensor: Failed: Please try to place the center of the fingerprint flat to sensor, or this fingerprint already exists !")
+                errors.reportError("error_fingerprint_sensor: Failed: Please try to place the center of the fingerprint flat to sensor, or this fingerprint already exists!")
                 return 1
             elif rc == self.ACK_FULL:
-                errors.reportError("error_fingerprint_sensor: Failed: The fingerprint library is full !")
+                errors.reportError("error_fingerprint_sensor: Failed: The fingerprint library is full!")
                 return 1 
             elif rc == self.ACK_TIMEOUT:
-                errors.reportError("error_fingerprint_sensor: Failed： Timeout！")
+                errors.reportError("error_fingerprint_sensor: Failed: Timeout!")
                 return 1
             elif rc == self.ACK_FINGER_OCCUPIED:
                 errors.reportError("error_fingerprint_sensor: The fingerprint already exists, please change a finger and test again!")
@@ -238,16 +238,16 @@ class FingerprintSensor:
                 print("matched")
                 return 0
             elif rc == self.ACK_NO_USER:
-                errors.reportError("error_fingerprint_sensor: Failed: This fingerprint was not found in the library !")
+                errors.reportError("error_fingerprint_sensor: Failed: This fingerprint was not found in the library!")
                 return 1
             elif rc == self.ACK_TIMEOUT:
-                errors.reportError("error_fingerprint_sensor: Failed: Time out !")
+                errors.reportError("error_fingerprint_sensor: Failed: Time out!")
                 return 1
             elif rc == self.ACK_GO_OUT:
-                errors.reportError("error_fingerprint_sensor: Failed: Please try to place the center of the fingerprint flat to sensor !")
+                errors.reportError("error_fingerprint_sensor: Failed: Please try to place the center of the fingerprint flat to sensor!")
                 return 1
             elif rc == self.ACK_FAIL:
-                errors.reportError("error_fingerprint_sensor: Failed！")
+                errors.reportError("error_fingerprint_sensor: Failed!")
                 return 1
         elif request == self.CMD_USER_CNT:
             count = self.get_user_count()

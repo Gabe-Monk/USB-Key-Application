@@ -139,9 +139,18 @@ def _watchdog_loop():
         
         try:
             resp = send_command("WD_HEARTBEAT")
-            if not resp.get("device_connected"):
-                raise AssertionError("Device disconnected")
-        except:
+
+            if not resp:
+                raise AssertionError("Failed to send heartbeat")
+            else:
+                data = resp.get("data", {})
+                device_connected = str(data.get("device_connected", "false")).lower() == "true"
+            
+            if not device_connected:
+                raise AssertionError("USB key not connected")
+        except Exception as e:
+            print(f"Error: Watchdog error: {e}")
+
             # If watchdog fails, assume device is gone
             if current_decrypted_file is not None:
                 print("\n\n[SECURITY ALERT] DEVICE DISCONNECTED! DELETING FILES!")

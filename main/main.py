@@ -2,10 +2,26 @@ import communication
 import files
 import os
 
+def authenticateFingerprint():
+    '''Returns `True` if authentication worked, else `False`'''
+
+    print("Please scan your finger now...")
+    resp = communication.send_command("AUTH_FINGERPRINT", {"timeout_s": 5}) # TODO: Make sure this timeout_s thing actually does anything, or just remove
+    if resp and resp.get("ok"):
+        print("Fngerprint accepted")
+        return True
+    elif resp:
+        data = resp.get("data", {})
+        print(f"Fingerprint rejected. Error: {data.get('error')}") # TODO: Make sure this error thing actually does anything
+        return False
+    
+    print("Fingerprint rejected. No response from USB key")
+    return False
+
 # Wait until communication link with main program is established
 communication.wait_until_up()
 
-# Start the security watchdog immediately
+# Start the security watchdog
 communication.start_watchdog()
 
 # ---------------------------------------------------------
@@ -27,56 +43,61 @@ while True:
     
     choice = input("Select an option: ")
     
-    if choice == "1":
+    if choice == "1": # Check Status
         resp = communication.send_command("GET_STATUS")
         if resp:
             data = resp.get("data", {})
             print(f"Device Serial: {data.get('serial')}")
             print(f"Device Firmware: {data.get('firmware')}")
             print(f"Authenticated: {data.get('authenticated')}")
+            continue
         else:
-            print("Device not responding.")
+            print("Device not responding")
+            continue
 
-    elif choice == "2":
+    elif choice == "2": # Enroll Fingerprint
         print("Starting enrollment... Put your finger on the sensor.")
         resp = communication.send_command("ENROLL_FINGERPRINT")
         if resp and resp.get("ok"):
-            print("Success! Fingerprint saved.")
+            print("Success! Fingerprint saved")
+            continue
         else:
-            print("Enrollment failed.")
+            print("Enrollment failed")
+            continue
 
-    elif choice == "3":
-        print("Please scan your finger now...")
-        resp = communication.send_command("AUTH_FINGERPRINT", {"timeout_s": 10}) # TODO: Make sure this timeout_s thing actually does anything
-        if resp and resp.get("ok"):
-            print("FINGERPRINT ACCEPTED!")
-        elif resp:
-            data = resp.get("data", {})
-            print(f"Fingerprint rejected. Error: {data.get('error')}") # TODO: Make sure this error thing actually does anything
-        else:
-            print("FINGERPRINT REJECTED.")
+    elif choice == "3": # Authenticate (Login)
+        authenticateFingerprint()
+        continue
 
-    elif choice == "4":
+    elif choice == "4": # Encrypt a File
         fname = input("Enter filename to encrypt: ")
-        target_sn = int(input("Enter serial number of target decryptor device:"))
+        target_sn = int(input("Enter serial number of target decryptor device: "))
         files.encrypt_file(fname, target_sn)
+        continue
 
-    elif choice == "5":
+    elif choice == "5": # Decrypt a File
         fname = input("Enter .ukey filename to decrypt: ")
 
         # Get serial number of connected device
         resp = communication.send_command("GET_STATUS")
         if resp:
-            device_sn = int(resp.get("data", {}).get('serial'))
+            data = resp.get("data", {})
+            device_sn = int(data.get('serial'))
+            authenticated = str(data.get("authenticated", "false")).lower() == "true"
         else:
             print("Device not responding.")
+            continue
 
+        if not authenticated:
+            print("User not yet authenticated via biometrics. Please authenticate before attempting decryption")
+            authenticated = authenticateFingerprint()
         
-        # print("You must authenticate first...")
-        # resp = communication.send_command("AUTH_FINGERPRINT")
+            if not authenticated:
+                print("Authentication required for decryption failed. Please try again")
+                continue
         
-        if True:#resp and resp["data"]["accepted"]:
-            print("Auth OK.")
+        if authenticated: # Not an `else` here because we modify this value in the above `if not` block
+            print("User authenticated. Proceeding with decryption")
             
             secret_file = files.decrypt_file(fname, device_sn)
             
@@ -89,10 +110,11 @@ while True:
                 #     os.remove(secret_file)
                 #     print("File deleted.")
                 #     communication.current_decrypted_file = None
-        else:
-            print("Authentication failed!")
+            else:
+                print(f"Failed to find target file '{fname}'")
+                continue
 
-    elif choice == "6":
+    elif choice == "6": # Exit
         print("Exiting...")
         communication.running = False # Stop the watchdog
         break
