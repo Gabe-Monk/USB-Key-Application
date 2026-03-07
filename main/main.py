@@ -1,6 +1,7 @@
 import communication
 import files
 import os
+import signal
 
 def authenticateFingerprint():
     '''Returns `True` if authentication worked, else `False`'''
@@ -17,6 +18,21 @@ def authenticateFingerprint():
     
     print("Fingerprint rejected. No response from USB key")
     return False
+
+def handleTermination(sig, frame):
+    print("\nReceived termination signal. Cleaning up...")
+
+    if communication.current_decrypted_file is not None:
+        if os.path.exists(communication.current_decrypted_file):
+            os.remove(communication.current_decrypted_file)
+            print(f"Deleted temporary, decrypted copy of file ({communication.current_decrypted_file})")
+        else:
+            print(f"Couldn't find file '{communication.current_decrypted_file}' to delete")
+    exit(0)
+
+# Register listener for SIGTERM/SIGINTs
+signal.signal(signal.SIGTERM, handleTermination)
+signal.signal(signal.SIGINT, handleTermination)
 
 # Wait until communication link with main program is established
 communication.wait_until_up()
@@ -85,7 +101,7 @@ while True:
             device_sn = int(data.get('serial'))
             authenticated = str(data.get("authenticated", "false")).lower() == "true"
         else:
-            print("Device not responding.")
+            print("Device not responding")
             continue
 
         if not authenticated:
@@ -103,7 +119,12 @@ while True:
             
             # Only proceed if a file was actually created
             if secret_file:
-                input("File is ready. Press ENTER to delete it")
+                try:
+                    input("File is ready. Press ENTER to delete it")
+                except KeyboardInterrupt:
+                    # If we get a Ctrl+C here when file still exists, make sure we delete it
+                    handleTermination(None, None)
+                    
                 
                 # Cleanup
                 if os.path.exists(secret_file):
