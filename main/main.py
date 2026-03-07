@@ -103,13 +103,17 @@ while True:
             
             # Only proceed if a file was actually created
             if secret_file:
-                input("File is ready. Press ENTER to delete it.")
+                input("File is ready. Press ENTER to delete it")
                 
-                # # Cleanup
-                # if os.path.exists(secret_file):
-                #     os.remove(secret_file)
-                #     print("File deleted.")
-                #     communication.current_decrypted_file = None
+                # Cleanup
+                if os.path.exists(secret_file):
+                    os.remove(secret_file)
+                    print("File deleted")
+                    communication.current_decrypted_file = None
+                    continue
+                else:
+                    print(f"Couldn't find file '{secret_file}' to delete")
+                    continue
             else:
                 print(f"Failed to find target file '{fname}'")
                 continue
