@@ -49,7 +49,7 @@ int main() {
         
         Json::Value data;
 
-switch (msg.getCmd()) {
+        switch (msg.getCmd()) {
             case UC_GET_STATUS: {
                 std::string reply;
                 CHK(getSerialNumber(reply, port));

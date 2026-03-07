@@ -25,21 +25,17 @@ socket_lock = threading.Lock()
 # FUNCTIONS
 # ---------------------------------------------------------
 
-def send_command(cmd, data=None):
+def send_command(cmd):
     """
     Sends a command. If it fails, it resets the connection 
     so the next command doesn't crash.
     """
     # We need to use 'global' so we can replace the broken socket
     global socket, context 
-
-    if data is None:
-        data = {}
     
     msg = {
-        "req_id": 123, 
+        "req_id": 123, # TODO: Make this matter or remove
         "cmd": cmd, 
-        "data": data
     }
     
     json_str = json.dumps(msg)
@@ -53,20 +49,6 @@ def send_command(cmd, data=None):
             reply_str = socket.recv_string()
             return json.loads(reply_str)
 
-        except Exception as e:
-            # 3. IF ANYTHING GOES WRONG (Timeout, Error, etc.)
-            print(f"\n[!] Error: {e}")
-            print("[-] Resetting the connection (Hanging up and redialing)...")
-            
-            # Close the broken socket
-            socket.close(linger=0)
-            
-            # Create a brand new one
-            socket = context.socket(zmq.REQ)
-            socket.setsockopt(zmq.RCVTIMEO, 5000) # Remember the 5s timeout!
-            socket.connect("tcp://localhost:5555")
-            
-            return None
         except Exception as e:
             # 3. IF ANYTHING GOES WRONG (Timeout, Error, etc.)
             print(f"\n[!] Error: {e}")

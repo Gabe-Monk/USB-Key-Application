@@ -57,7 +57,6 @@ class CmdMsg {
     private:
         uint32_t reqId = 0;
         userCmd cmd;
-        Json::Value data;
 
     public:
         CmdMsg() = default;
@@ -89,10 +88,6 @@ class CmdMsg {
 
             if (root.isMember("cmd")) {
                 cmd = stringToUserCmd(root["cmd"].asString());
-            }
-
-            if (root.isMember("data")) {
-                data = root["data"];
             }
         }
 

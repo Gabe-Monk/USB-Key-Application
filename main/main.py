@@ -6,7 +6,7 @@ def authenticateFingerprint():
     '''Returns `True` if authentication worked, else `False`'''
 
     print("Please scan your finger now...")
-    resp = communication.send_command("AUTH_FINGERPRINT", {"timeout_s": 5}) # TODO: Make sure this timeout_s thing actually does anything, or just remove
+    resp = communication.send_command("AUTH_FINGERPRINT")
     if resp and resp.get("ok"):
         print("Fngerprint accepted")
         return True
