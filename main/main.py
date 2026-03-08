@@ -2,6 +2,7 @@ import communication
 import files
 import os
 import signal
+import subprocess
 
 def authenticateFingerprint():
     '''Returns `True` if authentication worked, else `False`'''
@@ -119,10 +120,13 @@ while True:
             
             # Only proceed if a file was actually created
             if secret_file:
+                print(f"Opening {secret_file} in read-only mode...")
                 try:
-                    input("File is ready. Press ENTER to delete it")
+                    # The '-v' flag opens nano in 'view' mode (read-only)
+                    subprocess.run(["nano", "-v", secret_file])
+                except Exception as e:
+                    print(f"Failed to open file viewer: {e}")
                 except KeyboardInterrupt:
-                    # If we get a Ctrl+C here when file still exists, make sure we delete it
                     handleTermination(None, None)
                     
                 

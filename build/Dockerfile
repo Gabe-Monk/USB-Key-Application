@@ -7,7 +7,8 @@ RUN apt-get update && \
                        libjsoncpp-dev \
                        libserialport-dev \
                        libzmq3-dev \
-                       libssl-dev && \
+                       libssl-dev \
+                       nano && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
