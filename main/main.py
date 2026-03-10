@@ -120,14 +120,23 @@ while True:
             
             # Only proceed if a file was actually created
             if secret_file:
-                print(f"Opening {secret_file} in read-only mode...")
-                try:
-                    # The '-v' flag opens nano in 'view' mode (read-only)
-                    subprocess.run(["nano", "-v", secret_file])
-                except Exception as e:
-                    print(f"Failed to open file viewer: {e}")
-                except KeyboardInterrupt:
-                    handleTermination(None, None)
+                # Open in Nano if .txt, otherwise, just create file (not uesful to open other types like pdf in text editors)
+                if secret_file.lower().endswith(".txt"):
+                    print(f"Opening {secret_file} in read-only mode...")
+                    try:
+                        # The '-v' flag opens nano in 'view' mode (read-only)
+                        subprocess.run(["nano", "-v", secret_file])
+                    except Exception as e:
+                        print(f"Failed to open file viewer: {e}")
+                    except KeyboardInterrupt:
+                        # If we get a Ctrl+C here when file still exists, make sure we delete it
+                        handleTermination(None, None)
+                else:
+                    try:
+                        input(f"File '{secret_file}' is ready. Press ENTER to delete it")
+                    except KeyboardInterrupt:
+                        # If we get a Ctrl+C here when file still exists, make sure we delete it
+                        handleTermination(None, None)
                     
                 
                 # Cleanup
