@@ -105,7 +105,7 @@ def decrypt_file(target_ukey, device_sn):
         target_sn = int.from_bytes(encrypted_data_incl_sn[-4:], byteorder="big", signed=False)
 
         if target_sn != device_sn:
-            print(f"Error: Trying to decrypt file encrypted for device {target_sn} with device {device_sn}")
+            print(f"Error: Trying to decrypt file encrypted for different serial number! Your device's serial number: {device_sn}")
             return None
     except Exception as e:
         print(f"Failed to extract serial number from .ukey file: {e}")
