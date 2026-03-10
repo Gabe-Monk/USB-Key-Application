@@ -61,7 +61,7 @@ int main() {
                 data["authenticated"] = authenticated;
                 break;
             }
-            case UC_ENROLL_FINGERPRINT: { // TODO: NEEDS TESTING
+            case UC_ENROLL_FINGERPRINT: {
                 std::string resp;
                 // passing resp to capture response for pc_enroll_fingerprint command
                 // NOTE: command is currently very verbose, need to reduce output on Key end
@@ -75,7 +75,7 @@ int main() {
                 }
                 break; 
             }
-            case UC_AUTH_FINGERPRINT: { // TODO: NEEDS TESTING
+            case UC_AUTH_FINGERPRINT: {
                 std::string resp;
                 // passing resp to capture response for pc_authenticate_fingerprint command
                 // NOTE: command is currently very verbose, need to reduce output on Key end
@@ -90,8 +90,6 @@ int main() {
                 break;
             }
             case UC_GET_PRIVATE_KEY: {
-                // TODO: Make sure fingerprint confirmed before sending this
-                
                 std::string reply;
                 
                 // Fetch the private key from the device by sending the pc_req_key command.
@@ -112,7 +110,7 @@ int main() {
                 break;
             }
             case UC_WD_HEARTBEAT:
-                data["device_connected"] = true; // TODO:
+                data["device_connected"] = true;
                 break;
             default: // TODO: We should implement some handling for this scenario on both ends of the communication. I've put some boilerplate here for now
                 response["ok"] = false;
