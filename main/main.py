@@ -10,7 +10,7 @@ def authenticateFingerprint():
     print("Please scan your finger now...")
     resp = communication.send_command("AUTH_FINGERPRINT")
     if resp and resp.get("ok"):
-        print("Fngerprint accepted")
+        print("Fingerprint accepted")
         return True
     elif resp:
         data = resp.get("data", {})
