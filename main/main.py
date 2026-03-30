@@ -83,8 +83,8 @@ while True:
 
     elif choice == "4": # Encrypt a File
         fname = input("Enter filename to encrypt: ")
-        target_sn = int(input("Enter serial number of target decryptor device: "))
-        files.encrypt_file(fname, target_sn)
+        target_user = int(input("Enter name of owner of target decryptor device: "))
+        files.encrypt_file(fname, target_user)
         continue
 
     elif choice == "5": # Decrypt a File

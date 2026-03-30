@@ -11,17 +11,27 @@ ENC_BIN = "/app/build/bin/rsa_aes_enc"
 DEC_BIN = "/app/build/bin/rsa_aes_dec"
 CSV_FILE = "/app/crypto/keys.csv"
 
-def get_pub_key(target_sn):
+def get_pub_key(target_user):
     with open(CSV_FILE, newline="") as f:
         reader = csv.DictReader(f)
 
         for row in reader:
-            if int(row["Serial Number"]) == target_sn:
+            if int(row["Owner"]) == target_user:
                 return row["Public RSA Key"]
 
     return None
 
-def encrypt_file(target_file, target_sn):
+def get_target_sn(target_user):
+    with open(CSV_FILE, newline="") as f:
+        reader = csv.DictReader(f)
+
+        for row in reader:
+            if int(row["Owner"]) == target_user:
+                return row["Serial Number"]
+
+    return None
+
+def encrypt_file(target_file, target_user):
     """
     Encrypts any file by preparing a workspace for the rsa_aes_enc C binary.
     The C binary expects specific hardcoded filenames, so we temporarily copy the target 
@@ -37,9 +47,14 @@ def encrypt_file(target_file, target_sn):
 
     try:
         # 1. Get public key to pass to encryption program (still base64 encoded)
-        pubkey = get_pub_key(target_sn)
+        pubkey = get_pub_key(target_user)
         if pubkey == None:
-            print(f"Failed to find public key for device with serial number {target_sn} in {CSV_FILE}")
+            print(f"Failed to find public key for device with owner {target_user} in {CSV_FILE}")
+            return
+
+        target_sn = get_target_sn(target_user)
+        if target_sn == None:
+            print(f"Failed to find serial number for device with owner {target_sn} in {CSV_FILE}")
             return
 
         # 2. Execute the C encryption binary
