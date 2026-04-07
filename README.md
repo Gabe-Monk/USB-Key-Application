@@ -46,29 +46,6 @@ For debugging purposes, we can force the port used to talk to the device to be t
 1. Build the Docker image via `docker compose build`
 1. Run the application via `docker compose run --rm app`
 
-## What Each File Does
-Here is a quick explanation of the files so you know where everything is:
-
-  1. `main/main.py`:
-  This is the main application file. It handles the "Handshake" and shows the menu loop (Press 1 for Status, Press 2 for Enroll, etc.).
-
-  1. `main/communication.py`:
-  This file handles all the ZMQ socket stuff. It sends JSON commands and waits for answers.
-  It also runs a Watchdog in the background. This is a separate thread that keeps checking if the device is plugged in. If the device disappears, it deletes the decrypted files.
-
-  1. `main/files.py`:
-  This file is supposed to handle reading, encrypting, and decrypting files. \
-
-  1. `build/Dockerfile`:
-  Encapsulates the application.
-
-  1. `docker-compose.yml`:
-  Used to run the dockerfile. The network_mode: "host" so the code inside the container can talk to the device
-
-  1. `build/requirements.txt`:
-  This is just a list of libraries required, currently only installs pyzmq
-
 ## Encryption/Decryption Info
 1. When encrypting a file, be sure that it is in the root directory of the USB-Key-Application folder
 1. When decrypting a file the decrypted file will appear in the root directory of the USB-Key-Application folder
-1. Right now after decrypting is done, the app gets stuck in a loop of printing [SECURITY ALERT] DEVICE DISCONNECTED DELETING FILES. Dont worry its not actually deleting the decrypted file, its just a bug I need to fix. But to exit the app from this stage, just hit enter for the main menu to reappear, enter 6, and then hit enter once again
