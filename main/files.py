@@ -16,7 +16,7 @@ def get_pub_key(target_user):
         reader = csv.DictReader(f)
 
         for row in reader:
-            if int(row["Owner"]) == target_user:
+            if row["Owner"] == target_user:
                 return row["Public RSA Key"]
 
     return None
@@ -26,7 +26,7 @@ def get_target_sn(target_user):
         reader = csv.DictReader(f)
 
         for row in reader:
-            if int(row["Owner"]) == target_user:
+            if row["Owner"] == target_user:
                 return row["Serial Number"]
 
     return None
@@ -52,9 +52,9 @@ def encrypt_file(target_file, target_user):
             print(f"Failed to find public key for device with owner {target_user} in {CSV_FILE}")
             return
 
-        target_sn = get_target_sn(target_user)
+        target_sn = int(get_target_sn(target_user))
         if target_sn == None:
-            print(f"Failed to find serial number for device with owner {target_sn} in {CSV_FILE}")
+            print(f"Failed to find serial number for device with owner {target_user} in {CSV_FILE}")
             return
 
         # 2. Execute the C encryption binary
